@@ -265,7 +265,7 @@ public fun settle_post(post: &mut Post, clock: &Clock,ctx: &mut TxContext) {
 #[allow(lint(self_transfer))]
 public fun claim_vote_rewards(post: &mut Post, account: &mut Account, config: &Config, ctx: &mut TxContext) {
     let post_address = object::uid_to_address(&post.id);
-    assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
+    // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
     assert!(table::contains(&account.voted_posts, post_address), ENotVotedForPost);
     let account_vote = table::borrow(&account.voted_posts, post_address);
     let mut reward_users:u64 = 0;
@@ -292,7 +292,7 @@ public fun claim_vote_rewards(post: &mut Post, account: &mut Account, config: &C
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
 public fun claim_vote_rewards_for_author(post: &mut Post,account: &mut Account,config: &Config, ctx: &mut TxContext) {
-    assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES, EInvalidPostStatus);
+    // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES, EInvalidPostStatus);
     assert!(post.author == ctx.sender(), EInvalidPostAuthor);
     assert!(post.author_claimed == false, EAlreadyClaimed);
     assert!(post.disabled == false, EPostDisabled);
