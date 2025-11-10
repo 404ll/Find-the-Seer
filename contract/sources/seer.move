@@ -175,7 +175,7 @@ public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
         claimed_posts: vector::empty<address>(),
     };
     vector::push_back(&mut seer.accounts, address);
-    transfer::share_object(account);
+    transfer::transfer(account, ctx.sender());
     event::emit(CreateAccountEvent {
         user: ctx.sender(),
         account_address: address,
@@ -240,8 +240,7 @@ public fun vote_post(post: &mut Post, account: &mut Account, clock: &Clock,vote:
     });
 }
 
-public(package) fun settle_post(post: &mut Post, clock: &Clock,ctx: &mut TxContext) {
-    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
+public(package) fun settle_post(post: &mut Post, ctx: &mut TxContext) {
     if(post.true_votes_count + post.false_votes_count == 0) {
         post.status = POST_STATUS_NO_VOTES;
     }else{
@@ -263,9 +262,10 @@ public(package) fun settle_post(post: &mut Post, clock: &Clock,ctx: &mut TxConte
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
 public fun claim_vote_rewards(post: &mut Post, account: &mut Account, clock: &Clock,config: &Config, ctx: &mut TxContext) {
+    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
     let post_address = object::uid_to_address(&post.id);
     if(post.status == POST_STATUS_PENDING && post.disabled == false){
-        settle_post(post, clock, ctx);
+        settle_post(post, ctx);
     };
     // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
     assert!(table::contains(&account.voted_posts, post_address), ENotVotedForPost);
@@ -294,8 +294,9 @@ public fun claim_vote_rewards(post: &mut Post, account: &mut Account, clock: &Cl
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
 public fun claim_vote_rewards_for_author(post: &mut Post,account: &mut Account,clock: &Clock,config: &Config, ctx: &mut TxContext) {
+    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
     if(post.status == POST_STATUS_PENDING && post.disabled == false){
-        settle_post(post, clock, ctx);
+        settle_post(post, ctx);
     };
     // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
     assert!(post.author == ctx.sender(), EInvalidPostAuthor);
