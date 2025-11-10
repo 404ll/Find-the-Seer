@@ -5,21 +5,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-export default function Navbar() {
-  const pathname = usePathname();
+export default function Navbar() {  
+    const pathname = usePathname();
   const router = useRouter();
   const isHome = pathname === "/";
   const isProfile = pathname === "/profile";
   const [selected, setSelected] = useState<"home" | "profile">("home");
   const currentAccount = useCurrentAccount();
 
-  useEffect(() => {
-    if (isHome) {
+    useEffect(() => {
+        if (isHome) {
       setSelected("home");
-    } else if (isProfile) {
+        } else if (isProfile) {
       setSelected("profile");
-    }
-  }, [pathname]);
+        }
+    }, [pathname]);
 
   const handleHeaderClick = (e: React.MouseEvent<HTMLElement>) => {
     // 如果点击的是链接、按钮或其他交互元素，不执行跳转
@@ -31,8 +31,8 @@ export default function Navbar() {
     router.push('/');
   };
 
-  return (
-    <div className="flex flex-col bg-black">
+    return (
+          <div className="flex flex-col bg-black">
       <header 
         className="flex items-center justify-center relative px-4 py-4 pb-0 bg-white cursor-pointer"
         onClick={handleHeaderClick}
@@ -46,8 +46,8 @@ export default function Navbar() {
             href="/"
             className={`font-cbyg text-3xl px-4 py-2 rounded-t-[12px] transition-colors ${
               selected === "home"
-                ? "text-white bg-black shadow-sm"
-                : "text-black bg-white shadow-sm"
+                ? "text-white bg-black shadow-sm-top"
+                : "text-black bg-white shadow-sm-top"
             }`}
           >
             Home
@@ -56,8 +56,8 @@ export default function Navbar() {
             href="/profile"
             className={`font-cbyg text-3xl px-4 py-2 rounded-t-[12px] transition-colors ${
               selected === "profile"
-                ? "text-white bg-black shadow-sm"
-                : "text-black bg-white shadow-sm"
+                ? "text-white bg-black shadow-sm-top"
+                : "text-black bg-white shadow-sm-top"
             }`}
           >
             Profile
@@ -96,6 +96,6 @@ export default function Navbar() {
           )}
         </div>
       </header>
-    </div>
-  );
+        </div>
+    );
 }

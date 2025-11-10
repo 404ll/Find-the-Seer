@@ -7,42 +7,42 @@ const posts = [
     {
         id: '1',
         content: 'The world is ending',
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '2',
         content: "It's raining today",
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '3',
         content: "It's raining today",
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '4',
         content: "It's raining today",
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '5',
         content: 'Another post',
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '6',
         content: 'More content',
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '7',
         content: 'Even more posts',
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
     {
         id: '8',
         content: 'Last post',
-        image: 'https://via.placeholder.com/150',
+        image: '/logo/wal_1.png',
     },
 ];
 
