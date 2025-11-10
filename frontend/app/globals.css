@@ -76,3 +76,22 @@ body {
     box-shadow: 0 -1px 4px 0 rgb(0 0 0 / 0.1);
   }
 }
+
+/* Custom slider styles */
+.slider-custom::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #000;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider-custom::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #000;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}

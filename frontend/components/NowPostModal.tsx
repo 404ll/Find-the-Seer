@@ -1,17 +1,15 @@
+import { Post } from "@/types/display";
+
 interface NowPostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    content: string;
-    verifier?: string;
-    truthRatio?: string;
+    post: Post;
 }
 
 export default function NowPostModal({ 
     isOpen, 
     onClose, 
-    content, 
-    verifier = "100", 
-    truthRatio = "70%" 
+    post, 
 }: NowPostModalProps) {
     if (!isOpen) return null;
 
@@ -33,28 +31,30 @@ export default function NowPostModal({
                 </button>
 
                 {/* 主要内容 */}
-                <h1 className="text-black text-3xl font-cbyg text-center mt-4">
-                    {content}
+                <h1 className="text-black text-2xl font-cbyg text-center mt-4 whitespace-pre-wrap break-words max-w-full overflow-hidden" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                    {post.content}
                 </h1>
 
                 {/* 黑色信息框 */}
                 <div className="bg-black rounded-[12px] p-4 flex flex-col gap-3">
                     <div className="text-white text-xl font-cbyg">
-                        Verifier : <span className="ml-2">{verifier}</span>
+                        Verifier : <span className="ml-2">{post.votecount}</span>
                     </div>
                     <div className="text-white text-xl font-cbyg">
-                        Truth Ratio : <span className="ml-2">{truthRatio}</span>
+                        Truth Ratio : <span className="ml-2">{post.trueFalseRatio}</span>
                     </div>
                 </div>
 
                 {/* 关闭按钮 */}
-                <div className="flex justify-end">
-                    <button
-                        className="bg-red-500 hover:bg-red-600 text-white rounded-[12px] px-6 py-2 font-cbyg text-xl transition-colors"
-                    >
-                        Close
-                    </button>
-                </div>
+                {post.status === 'Verify' && (
+                    <div className="flex justify-end">
+                        <button
+                            className="bg-[#679533] text-white rounded-[12px] px-6 py-2 font-cbyg text-xl transition-colors hover:scale-105 duration-300"
+                        >
+                            Verify
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,30 +1,22 @@
+import { Post } from "@/types/display";
+
 interface ClosePostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    content: string;
-    verifier: string;
-    truthRatio: string;
-    reward: string;
-    trueVotesCount: number;
-    falseVotesCount: number;
+    post: Post;
 }
 
 export default function ClosePostModal({ 
     isOpen, 
     onClose, 
-    content, 
-    verifier, 
-    truthRatio, 
-    reward, 
-    trueVotesCount, 
-    falseVotesCount
+    post,
 }: ClosePostModalProps) {
     if (!isOpen) return null;
 
     // 计算总票数和百分比
-    const totalVotes = trueVotesCount + falseVotesCount;
-    const truePercentage = totalVotes > 0 ? Math.round((trueVotesCount / totalVotes) * 100) : 0;
-    const falsePercentage = totalVotes > 0 ? Math.round((falseVotesCount / totalVotes) * 100) : 0;
+    const totalVotes = post.trueVotesCount + post.falseVotesCount;
+    const truePercentage = totalVotes > 0 ? Math.round((post.trueVotesCount / totalVotes) * 100) : 0;
+    const falsePercentage = totalVotes > 0 ? Math.round((post.falseVotesCount / totalVotes) * 100) : 0;
 
     return (
         <div 
@@ -43,21 +35,21 @@ export default function ClosePostModal({
                     <span className="text-gray-600 text-xl font-cbyg">X</span>
                 </button>
 
-                {/* 主要内容 */}
-                <h1 className="text-black text-3xl font-cbyg text-center mt-4">
-                    {content}
+                {/* 主要内容，可以换行 */}
+                <h1 className="text-black text-2xl font-cbyg text-center mt-4 whitespace-pre-wrap break-words max-w-full overflow-hidden" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                    {post.content}
                 </h1>
 
                 {/* 黑色信息框 */}
                 <div className="bg-black rounded-[12px] p-4 flex flex-col gap-4">
                     <div className="text-white text-xl font-cbyg">
-                        Verifier : <span className="ml-2">{verifier}</span>
+                        Influence : <span className="ml-2">{post.votecount}</span>
                     </div>
                     <div className="text-white text-xl font-cbyg">
-                        Truth Ratio : <span className="ml-2">{truthRatio}</span>
+                        Truth Ratio : <span className="ml-2">{post.trueFalseRatio}</span>
                     </div>
                     <div className="text-white text-xl font-cbyg">
-                       Your Reward : <span className="ml-2">{reward}</span>
+                       Your Reward : <span className="ml-2">先硬编码</span>
                     </div>
                     
                     {/* TRUE/FALSE 进度条 */}
@@ -92,15 +84,6 @@ export default function ClosePostModal({
                             <span className="text-white text-xl font-cbyg whitespace-nowrap">{falsePercentage}% ]</span>
                         </div>
                     </div>
-                </div>
-
-                {/* 关闭按钮 */}
-                <div className="flex justify-end">
-                    <button
-                        className="bg-red-500 hover:bg-red-600 text-white rounded-[12px] px-6 py-2 font-cbyg text-xl transition-colors"
-                    >
-                        Close
-                    </button>
                 </div>
             </div>
         </div>

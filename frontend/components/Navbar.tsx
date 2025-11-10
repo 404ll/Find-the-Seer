@@ -43,7 +43,7 @@ export default function Navbar() {
           onClick={(e) => e.stopPropagation()}
         >
           <Link
-            href="/"
+            href="/home"
             className={`font-cbyg text-3xl px-4 py-2 rounded-t-[12px] transition-colors ${
               selected === "home"
                 ? "text-white bg-black shadow-sm-top"
