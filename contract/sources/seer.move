@@ -18,9 +18,7 @@ use sui::event::{Self};
 const EInvalidVoteTime: u64 = 0;
 const EAlreadyVoted: u64 = 1;
 const EInvalidSettleTime: u64 = 2;
-const EPostDisabled: u64 = 3;
 const EInvalidCoinValue: u64 = 4;
-const EInvalidPostStatus: u64 = 5;
 const EInvalidPostAuthor: u64 = 6;
 const EInvalidBp: u64 = 7;
 const ENotEnoughFees: u64 = 8;
@@ -41,6 +39,8 @@ const CREATE_POST_FEE: u64 = 100_000_000;
 const VOTE_VALUE: u64 = 100_000_000;
 const ALLOCATION_RATIO: u64 = 8000;
 
+
+//=====Structs=====
 public struct AdminCap has key{
     id:UID,
 }
@@ -74,14 +74,12 @@ public struct Post has key {
     false_votes_count: u64,
     status: u8,
     votes_pool: Balance<SUI>,
-    author_claimed: bool,
-    disabled: bool,
+    author_claimed: bool
 }
 
 public struct Account has key {
     id: UID,
     name: String,
-    influence: u64,
     vote_profit: u64,
     author_profit: u64,
     owned_posts: vector<address>,
@@ -91,6 +89,7 @@ public struct Account has key {
     claimed_posts: vector<address>,
 }
 
+//=====Events=====
 public struct CreateAccountEvent has copy,drop {
     user: address,
     account_address: address,
@@ -133,10 +132,6 @@ public struct ClaimCreatePostFeesEvent has copy,drop {
     values: u64,
 }
 
-public struct ManagePostEvent has copy,drop {
-    post: address,
-    disabled: bool,
-}
 
 public struct UpdateAllocationRatioEvent has copy,drop {
     allocation_ratio: u64,
@@ -146,6 +141,8 @@ public struct UpdateCreatePostFeeEvent has copy,drop {
     create_post_fee: u64,
 }
 
+
+//=====Functions=====
 fun init(ctx: &mut TxContext) {
     transfer::transfer(AdminCap { id: object::new(ctx) }, ctx.sender());
     transfer::share_object(Config {
@@ -167,7 +164,6 @@ public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
     let account = Account {
         id: id,
         name: name,
-        influence: 0,
         vote_profit: 0,
         author_profit: 0,
         owned_posts: vector::empty<address>(),
@@ -175,7 +171,7 @@ public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
         claimed_posts: vector::empty<address>(),
     };
     vector::push_back(&mut seer.accounts, address);
-    transfer::transfer(account, ctx.sender());
+    transfer::share_object(account);
     event::emit(CreateAccountEvent {
         user: ctx.sender(),
         account_address: address,
@@ -207,7 +203,6 @@ public fun create_post(blob_id: String, lasting_time: u64, predicted_true_bp: u6
         false_votes_count: 0,
         status: POST_STATUS_PENDING,
         votes_pool: balance::zero<SUI>(),
-        disabled: false,
         author_claimed: false,
     });
     event::emit(CreatePostEvent {
@@ -223,7 +218,6 @@ public fun vote_post(post: &mut Post, account: &mut Account, clock: &Clock,vote:
     let post_address = object::uid_to_address(&post.id);
     assert!(post.created_at + post.lasting_time > clock.timestamp_ms(), EInvalidVoteTime);
     assert!(!table::contains(&account.voted_posts, post_address), EAlreadyVoted);
-    assert!(post.disabled == false, EPostDisabled);
     assert!(coin::value(&coin) == VOTE_VALUE, EInvalidCoinValue);
     table::add(&mut account.voted_posts, post_address, vote);
     coin::put(&mut post.votes_pool, coin);
@@ -240,7 +234,8 @@ public fun vote_post(post: &mut Post, account: &mut Account, clock: &Clock,vote:
     });
 }
 
-public(package) fun settle_post(post: &mut Post, ctx: &mut TxContext) {
+public(package) fun settle_post(post: &mut Post, clock: &Clock,ctx: &mut TxContext) {
+    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
     if(post.true_votes_count + post.false_votes_count == 0) {
         post.status = POST_STATUS_NO_VOTES;
     }else{
@@ -262,12 +257,10 @@ public(package) fun settle_post(post: &mut Post, ctx: &mut TxContext) {
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
 public fun claim_vote_rewards(post: &mut Post, account: &mut Account, clock: &Clock,config: &Config, ctx: &mut TxContext) {
-    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
     let post_address = object::uid_to_address(&post.id);
-    if(post.status == POST_STATUS_PENDING && post.disabled == false){
-        settle_post(post, ctx);
+    if(post.status == POST_STATUS_PENDING){
+        settle_post(post, clock, ctx);
     };
-    // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
     assert!(table::contains(&account.voted_posts, post_address), ENotVotedForPost);
     let account_vote = table::borrow(&account.voted_posts, post_address);
     let mut reward_users:u64 = 0;
@@ -294,19 +287,15 @@ public fun claim_vote_rewards(post: &mut Post, account: &mut Account, clock: &Cl
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
 public fun claim_vote_rewards_for_author(post: &mut Post,account: &mut Account,clock: &Clock,config: &Config, ctx: &mut TxContext) {
-    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
-    if(post.status == POST_STATUS_PENDING && post.disabled == false){
-        settle_post(post, ctx);
+    if(post.status == POST_STATUS_PENDING){
+        settle_post(post, clock, ctx);
     };
     // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
     assert!(post.author == ctx.sender(), EInvalidPostAuthor);
     assert!(post.author_claimed == false, EAlreadyClaimed);
-    assert!(post.disabled == false, EPostDisabled);
-    let influence = post.true_votes_count + post.false_votes_count;
     let value = balance::value(&post.votes_pool);
     let vote_reward = value * (BP_DECIMAL - config.allocation_ratio) / BP_DECIMAL;
     account.author_profit = account.author_profit + vote_reward;
-    account.influence = account.influence + influence;
     post.author_claimed = true;
     let coin = coin::take(&mut post.votes_pool, vote_reward, ctx);
     transfer::public_transfer(coin, ctx.sender());
@@ -328,14 +317,6 @@ public fun claim_create_post_fees(_: &AdminCap,seer: &mut Seer,values:u64, ctx: 
     });
 }
 
-//settle
-public fun manage_post(_: &AdminCap,post: &mut Post, status: bool) {
-    post.disabled = status;
-    event::emit(ManagePostEvent {
-        post: object::uid_to_address(&post.id),
-        disabled: status,
-    });
-}
 
 public fun update_allocation_ratio(_: &AdminCap, config: &mut Config, allocation_ratio: u64) {
     assert!(allocation_ratio <= BP_DECIMAL, EInvalidBp);
