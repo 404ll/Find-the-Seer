@@ -5,9 +5,10 @@ interface OwnPostCardProps {
     content: string;
     createdAt: string;
     lastingTime: number;
+    onClick?: () => void;
 }
 
-export default function OwnPostCard({ content, createdAt, lastingTime }: OwnPostCardProps) {
+export default function OwnPostCard({ content, createdAt, lastingTime, onClick }: OwnPostCardProps) {
     const now = new Date();
     const [status, setStatus] = useState<boolean>(false);
     useEffect(() => {
@@ -16,7 +17,10 @@ export default function OwnPostCard({ content, createdAt, lastingTime }: OwnPost
         }
     }, [now, createdAt, lastingTime]);
     return (
-        <div className='bg-black rounded-[12px] p-4 flex flex-col gap-4 hover:scale-105 transition-all duration-300'>
+        <div 
+            className='bg-black rounded-[12px] p-4 flex flex-col gap-4 hover:scale-105 transition-all duration-300 cursor-pointer'
+            onClick={onClick}
+        >
             <div className='flex flex-row justify-center items-center gap-4 text-white text-2xl font-cbyg'>
                 <div>{content}</div>
                 {status ? <div className="bg-[#679533] rounded-[8px] p-2 text-black text-xl font-cbyg">Now</div> : <div className="bg-[#BDBDBD] rounded-[8px] p-2 text-white text-xl font-cbyg">Close</div>}

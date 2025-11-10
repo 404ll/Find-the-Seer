@@ -17,7 +17,7 @@ export default function ProfileCard({ walletAddress, influence, totalVotes, tota
     return (
         <Card className="bg-white rounded-[12px] p-4 flex flex-col">
            
-            <CardContent className="flex flex-col gap-6 text-black text-2xl font-cbyg">
+            <CardContent className="flex flex-col gap-10 text-black text-4xl font-cbyg">
                 {/* <p>address: {walletAddress}</p> */}
                 <p>Influence: {influence}</p>
                 <p>Total Votes: {totalVotes}</p>

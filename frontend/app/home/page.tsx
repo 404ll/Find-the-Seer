@@ -76,14 +76,16 @@ export default function HomePage() {
   };
 
   return (
-      <div className="min-h-screen flex flex-col bg-black relative">
+      <div className="min-h-screen flex flex-col bg-black">
         <Navbar />
-        <div className='grid grid-cols-1 gap-4 px-8 py-14'>
+        <div className='flex-1 px-8 py-14'>
+          <div className='grid grid-cols-1 gap-4'>
             <PostList posts={currentPosts} />
+          </div>
         </div>
        
         {totalPages > 1 && (
-          <div className='absolute bottom-0 left-1/2 -translate-x-1/2 pb-8 flex items-center gap-4 justify-center'>
+          <div className='flex items-center gap-4 justify-center pb-8'>
             <button 
               onClick={handlePrevious}
               disabled={currentPage === 1}
