@@ -519,7 +519,7 @@ public fun calculate_post_vote_reward_for_user(post: &Post, user: address): bool
     let user_vote = post.voted_results[*user_index];
     if (user_vote == VOTE_FOR_TRUE && true_bp > 5000) {
         true
-    } else if (user_vote == VOTE_FOR_FALSE && true_bp < 5000) {
+    } else if (user_vote == VOTE_FOR_FALSE && true_bp <= 5000) {
         true
     } else {
         false
