@@ -173,7 +173,7 @@ public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
         claimed_posts: vector::empty<address>(),
     };
     vector::push_back(&mut seer.accounts, address);
-    transfer::share_object(account);
+    transfer::transfer(account, ctx.sender()); // 改为 owned object
     event::emit(CreateAccountEvent {
         user: ctx.sender(),
         account_address: address,
@@ -386,14 +386,14 @@ public fun get_post_finish_time(post: &Post, clock: &Clock): u64 {
 }
 
 // Rp = (P * α) * (1 - Δ) / (1 + N)
-public fun calculate_post_author_reward(post:&Post,config:&Config,vote_delta:u64):u64{
+public fun calculate_post_author_reward(post: &Post, config: &Config, vote_delta: u64): u64 {
     let benchmark_value = (post.total_votes_value * config.reward_benchmark) / BP_DECIMAL;
     let total_count = post.false_votes_count + post.true_votes_count + 1;
     let author_reward = benchmark_value * (BP_DECIMAL - vote_delta) / (total_count * BP_DECIMAL);
     author_reward
 }
 
-public fun calculate_post_vote_reward(post:&Post,config:&Config,vote_delta:u64):u64{
+public fun calculate_post_vote_reward(post: &Post, config: &Config, vote_delta: u64): u64 {
     let author_reward = calculate_post_author_reward(post, config, vote_delta);
     let votes_reward = post.total_votes_value - author_reward;
     let true_bp = calculate_true_bp(post);
@@ -406,15 +406,21 @@ public fun calculate_post_vote_reward(post:&Post,config:&Config,vote_delta:u64):
     vote_reward
 }
 
-public fun calculate_vote_delta(post:&Post):u64{
-  if(post.true_bp > post.predicted_true_bp) {
-    post.true_bp - post.predicted_true_bp
-  } else {
-    post.predicted_true_bp - post.true_bp
-  }
+public fun calculate_vote_delta(post: &Post): u64 {
+    if (post.true_bp > post.predicted_true_bp) {
+        post.true_bp - post.predicted_true_bp
+    } else {
+        post.predicted_true_bp - post.true_bp
+    }
 }
 
-public fun calculate_true_bp(post:&Post):u64{
-    let true_bp = post.true_votes_count * BP_DECIMAL / (post.true_votes_count + post.false_votes_count);
+public fun calculate_true_bp(post: &Post): u64 {
+    let true_bp =
+        post.true_votes_count * BP_DECIMAL / (post.true_votes_count + post.false_votes_count);
     true_bp
+}
+
+#[test_only]
+public fun init_for_testing(ctx: &mut TxContext) {
+    init(ctx);
 }
