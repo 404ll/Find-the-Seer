@@ -8,12 +8,12 @@ module seer::seer;
 module seer::seer;
 
 use std::string::String;
-use sui::sui::SUI;
 use sui::balance::{Self, Balance};
-use sui::table::{Self, Table};
-use sui::clock::{Clock};
+use sui::clock::Clock;
 use sui::coin::{Self, Coin};
-use sui::event::{Self};
+use sui::event;
+use sui::sui::SUI;
+use sui::table::{Self, Table};
 
 const EInvalidVoteTime: u64 = 0;
 const EAlreadyVoted: u64 = 1;
@@ -28,7 +28,7 @@ const EAlreadyClaimed: u64 = 11;
 
 const POST_STATUS_PENDING: u8 = 0;
 const POST_STATUS_SUCCESS: u8 = 1;
-const POST_STATUS_FAILED: u8 = 2;   
+const POST_STATUS_FAILED: u8 = 2;
 const POST_STATUS_NO_VOTES: u8 = 3;
 
 //万分比
@@ -37,19 +37,20 @@ const BP_DECIMAL: u64 = 10000;
 //TODO:待设置项
 const CREATE_POST_FEE: u64 = 100_000_000;
 const VOTE_VALUE: u64 = 100_000_000;
-const ALLOCATION_RATIO: u64 = 8000;
-
+const REWARD_BENCHMARK: u64 = 2000; //20%
 
 //=====Structs=====
-public struct AdminCap has key{
-    id:UID,
+public struct AdminCap has key {
+    id: UID,
 }
 
 public struct Config has key {
     id: UID,
     create_post_fee: u64,
+    vote_value: u64,
+    reward_benchmark: u64,
     //帖子用户占奖池的比例
-    allocation_ratio: u64,
+    // allocation_ratio: u64,
 }
 
 //用于存储全局信息
@@ -73,8 +74,9 @@ public struct Post has key {
     true_votes_count: u64,
     false_votes_count: u64,
     status: u8,
+    total_votes_value: u64,
     votes_pool: Balance<SUI>,
-    author_claimed: bool
+    author_claimed: bool,
 }
 
 public struct Account has key {
@@ -90,13 +92,13 @@ public struct Account has key {
 }
 
 //=====Events=====
-public struct CreateAccountEvent has copy,drop {
+public struct CreateAccountEvent has copy, drop {
     user: address,
     account_address: address,
     name: String,
 }
 
-public struct CreatePostEvent has copy,drop {
+public struct CreatePostEvent has copy, drop {
     post: address,
     blob_id: String,
     lasting_time: u64,
@@ -104,43 +106,41 @@ public struct CreatePostEvent has copy,drop {
     author: address,
 }
 
-public struct VotePostEvent has copy,drop {
+public struct VotePostEvent has copy, drop {
     post: address,
     user: address,
     account: address,
     vote: bool,
 }
 
-public struct PostSettleEvent has copy,drop {
+public struct PostSettleEvent has copy, drop {
     post: address,
     settle: address,
     status: u8,
 }
 
-public struct ClaimVoteRewardsEvent has copy,drop {
+public struct ClaimVoteRewardsEvent has copy, drop {
     post: address,
     vote: bool,
 }
 
-public struct ClaimVoteRewardsForAuthorEvent has copy,drop {
+public struct ClaimVoteRewardsForAuthorEvent has copy, drop {
     post: address,
     author: address,
 }
 
-public struct ClaimCreatePostFeesEvent has copy,drop {
+public struct ClaimCreatePostFeesEvent has copy, drop {
     admin: address,
     values: u64,
 }
 
-
-public struct UpdateAllocationRatioEvent has copy,drop {
-    allocation_ratio: u64,
+public struct UpdateRewardBenchmarkEvent has copy, drop {
+    reward_benchmark: u64,
 }
 
-public struct UpdateCreatePostFeeEvent has copy,drop {
+public struct UpdateCreatePostFeeEvent has copy, drop {
     create_post_fee: u64,
 }
-
 
 //=====Functions=====
 fun init(ctx: &mut TxContext) {
@@ -148,7 +148,8 @@ fun init(ctx: &mut TxContext) {
     transfer::share_object(Config {
         id: object::new(ctx),
         create_post_fee: CREATE_POST_FEE,
-        allocation_ratio: ALLOCATION_RATIO,
+        vote_value: VOTE_VALUE,
+        reward_benchmark: REWARD_BENCHMARK,
     });
     transfer::share_object(Seer {
         id: object::new(ctx),
@@ -179,12 +180,22 @@ public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
     });
 }
 
-public fun create_post(blob_id: String, lasting_time: u64, predicted_true_bp: u64, account: &mut Account,seer: &mut Seer,coin: Coin<SUI>,clock: &Clock,config: &Config, ctx: &mut TxContext) {
+public fun create_post(
+    blob_id: String,
+    lasting_time: u64,
+    predicted_true_bp: u64,
+    account: &mut Account,
+    seer: &mut Seer,
+    coin: Coin<SUI>,
+    clock: &Clock,
+    config: &Config,
+    ctx: &mut TxContext,
+) {
     assert!(coin::value(&coin) == config.create_post_fee, EInvalidCoinValue);
     assert!(predicted_true_bp <= BP_DECIMAL, EInvalidBp);
     let id = object::new(ctx);
     let address = object::uid_to_address(&id);
-    if(!table::contains(&seer.posts, ctx.sender())) {
+    if (!table::contains(&seer.posts, ctx.sender())) {
         table::add(&mut seer.posts, ctx.sender(), vector::empty<address>());
     };
     let posts = table::borrow_mut(&mut seer.posts, ctx.sender());
@@ -202,6 +213,7 @@ public fun create_post(blob_id: String, lasting_time: u64, predicted_true_bp: u6
         true_votes_count: 0,
         false_votes_count: 0,
         status: POST_STATUS_PENDING,
+        total_votes_value: 0,
         votes_pool: balance::zero<SUI>(),
         author_claimed: false,
     });
@@ -214,17 +226,26 @@ public fun create_post(blob_id: String, lasting_time: u64, predicted_true_bp: u6
     });
 }
 
-public fun vote_post(post: &mut Post, account: &mut Account, clock: &Clock,vote: bool,coin: Coin<SUI>,ctx: &mut TxContext) {
+public fun vote_post(
+    post: &mut Post,
+    account: &mut Account,
+    clock: &Clock,
+    vote: bool,
+    coin: Coin<SUI>,
+    config: &Config,
+    ctx: &mut TxContext,
+) {
     let post_address = object::uid_to_address(&post.id);
     assert!(post.created_at + post.lasting_time > clock.timestamp_ms(), EInvalidVoteTime);
     assert!(!table::contains(&account.voted_posts, post_address), EAlreadyVoted);
-    assert!(coin::value(&coin) == VOTE_VALUE, EInvalidCoinValue);
+    assert!(coin::value(&coin) == config.vote_value, EInvalidCoinValue);
     table::add(&mut account.voted_posts, post_address, vote);
     coin::put(&mut post.votes_pool, coin);
+    post.total_votes_value = post.total_votes_value + config.vote_value;
     if (vote == true) {
-        post.true_votes_count= post.true_votes_count + 1;
+        post.true_votes_count = post.true_votes_count + 1;
     } else {
-        post.false_votes_count= post.false_votes_count + 1;
+        post.false_votes_count = post.false_votes_count + 1;
     };
     event::emit(VotePostEvent {
         post: post_address,
@@ -234,47 +255,44 @@ public fun vote_post(post: &mut Post, account: &mut Account, clock: &Clock,vote:
     });
 }
 
-public(package) fun settle_post(post: &mut Post, clock: &Clock,ctx: &mut TxContext) {
-    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
-    if(post.true_votes_count + post.false_votes_count == 0) {
+public(package) fun settle_post(post: &mut Post, ctx: &mut TxContext) {
+    if (post.true_votes_count + post.false_votes_count == 0) {
         post.status = POST_STATUS_NO_VOTES;
-    }else{
-    let true_bp = post.true_votes_count * BP_DECIMAL / (post.true_votes_count + post.false_votes_count);
-    post.true_bp = true_bp;
-    if (true_bp > 5000) {
-        post.status = POST_STATUS_SUCCESS;
-    } else{
-        post.status = POST_STATUS_FAILED;
-    };
-    event::emit(PostSettleEvent {
-        post: object::uid_to_address(&post.id),
-        settle: ctx.sender(),
-        status: post.status,
-    });
+    } else {
+        let true_bp = calculate_true_bp(post);
+        post.true_bp = true_bp;
+        if (true_bp > 5000) {
+            post.status = POST_STATUS_SUCCESS;
+        } else {
+            post.status = POST_STATUS_FAILED;
+        };
+        event::emit(PostSettleEvent {
+            post: object::uid_to_address(&post.id),
+            settle: ctx.sender(),
+            status: post.status,
+        });
     };
 }
 
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
-public fun claim_vote_rewards(post: &mut Post, account: &mut Account, clock: &Clock,config: &Config, ctx: &mut TxContext) {
+public fun claim_vote_rewards(
+    post: &mut Post,
+    account: &mut Account,
+    clock: &Clock,
+    config: &Config,
+    ctx: &mut TxContext,
+) {
+    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
     let post_address = object::uid_to_address(&post.id);
-    if(post.status == POST_STATUS_PENDING){
-        settle_post(post, clock, ctx);
+    if (post.status == POST_STATUS_PENDING) {
+        settle_post(post, ctx);
     };
     assert!(table::contains(&account.voted_posts, post_address), ENotVotedForPost);
     let account_vote = table::borrow(&account.voted_posts, post_address);
-    let mut reward_users:u64 = 0;
-    if(post.status == POST_STATUS_SUCCESS) {
-        assert!(*account_vote == true, EInvalidVoteForPost);
-        reward_users = post.true_votes_count;
-    } else if(post.status == POST_STATUS_FAILED) {
-        assert!(*account_vote == false, EInvalidVoteForPost);
-        reward_users = post.false_votes_count;
-    };
     assert!(!vector::contains(&account.claimed_posts, &post_address), EAlreadyClaimed);
     vector::push_back(&mut account.claimed_posts, post_address);
-    let value = balance::value(&post.votes_pool);
-    let vote_reward = value * config.allocation_ratio / (BP_DECIMAL * reward_users);
+    let vote_reward = calculate_post_vote_reward(post, config, calculate_vote_delta(post));
     account.vote_profit = account.vote_profit + vote_reward;
     let coin = coin::take(&mut post.votes_pool, vote_reward, ctx);
     transfer::public_transfer(coin, ctx.sender());
@@ -286,18 +304,24 @@ public fun claim_vote_rewards(post: &mut Post, account: &mut Account, clock: &Cl
 
 //TODO:领取金额要改
 #[allow(lint(self_transfer))]
-public fun claim_vote_rewards_for_author(post: &mut Post,account: &mut Account,clock: &Clock,config: &Config, ctx: &mut TxContext) {
-    if(post.status == POST_STATUS_PENDING){
-        settle_post(post, clock, ctx);
+public fun claim_vote_rewards_for_author(
+    post: &mut Post,
+    account: &mut Account,
+    clock: &Clock,
+    config: &Config,
+    ctx: &mut TxContext,
+) {
+    assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
+    if (post.status == POST_STATUS_PENDING) {
+        settle_post(post, ctx);
     };
     // assert!(post.status != POST_STATUS_PENDING && post.status != POST_STATUS_NO_VOTES && post.disabled == false, EInvalidPostStatus);
     assert!(post.author == ctx.sender(), EInvalidPostAuthor);
     assert!(post.author_claimed == false, EAlreadyClaimed);
-    let value = balance::value(&post.votes_pool);
-    let vote_reward = value * (BP_DECIMAL - config.allocation_ratio) / BP_DECIMAL;
-    account.author_profit = account.author_profit + vote_reward;
+    let author_reward = calculate_post_author_reward(post, config, calculate_vote_delta(post));
+    account.author_profit = account.author_profit + author_reward;
     post.author_claimed = true;
-    let coin = coin::take(&mut post.votes_pool, vote_reward, ctx);
+    let coin = coin::take(&mut post.votes_pool, author_reward, ctx);
     transfer::public_transfer(coin, ctx.sender());
     event::emit(ClaimVoteRewardsForAuthorEvent {
         post: object::uid_to_address(&post.id),
@@ -306,7 +330,7 @@ public fun claim_vote_rewards_for_author(post: &mut Post,account: &mut Account,c
 }
 
 #[allow(lint(self_transfer))]
-public fun claim_create_post_fees(_: &AdminCap,seer: &mut Seer,values:u64, ctx: &mut TxContext) {
+public fun claim_create_post_fees(_: &AdminCap, seer: &mut Seer, values: u64, ctx: &mut TxContext) {
     let post_fees = balance::value(&seer.post_fees);
     assert!(post_fees >= values, ENotEnoughFees);
     let coin = coin::take(&mut seer.post_fees, values, ctx);
@@ -317,12 +341,11 @@ public fun claim_create_post_fees(_: &AdminCap,seer: &mut Seer,values:u64, ctx: 
     });
 }
 
-
-public fun update_allocation_ratio(_: &AdminCap, config: &mut Config, allocation_ratio: u64) {
-    assert!(allocation_ratio <= BP_DECIMAL, EInvalidBp);
-    config.allocation_ratio = allocation_ratio;
-    event::emit(UpdateAllocationRatioEvent {
-        allocation_ratio: allocation_ratio,
+public fun update_reward_benchmark(_: &AdminCap, config: &mut Config, reward_benchmark: u64) {
+    assert!(reward_benchmark <= BP_DECIMAL, EInvalidBp);
+    config.reward_benchmark = reward_benchmark;
+    event::emit(UpdateRewardBenchmarkEvent {
+        reward_benchmark: reward_benchmark,
     });
 }
 
@@ -334,23 +357,23 @@ public fun update_create_post_fee(_: &AdminCap, config: &mut Config, create_post
 }
 
 //getter
-public fun get_create_post_fee(config: &Config):u64 {
+public fun get_create_post_fee(config: &Config): u64 {
     config.create_post_fee
 }
 
-public fun get_allocation_ratio(config: &Config):u64 {
-    config.allocation_ratio
+public fun get_reward_benchmark(config: &Config): u64 {
+    config.reward_benchmark
 }
 
-public fun get_post_status(post: &Post):u8 {
+public fun get_post_status(post: &Post): u8 {
     post.status
 }
 
-public fun get_post_author(post: &Post):address {
+public fun get_post_author(post: &Post): address {
     post.author
 }
 
-public fun get_post_finish_time(post: &Post,clock: &Clock):u64 {
+public fun get_post_finish_time(post: &Post, clock: &Clock): u64 {
     let end_time = post.created_at + post.lasting_time;
     let current_time = clock.timestamp_ms();
     if (current_time >= end_time) {
@@ -358,4 +381,38 @@ public fun get_post_finish_time(post: &Post,clock: &Clock):u64 {
     } else {
         end_time - current_time
     }
+}
+
+// Rp = (P * α) * (1 - Δ) / (1 + N)
+public fun calculate_post_author_reward(post:&Post,config:&Config,vote_delta:u64):u64{
+    let benchmark_value = (post.total_votes_value * config.reward_benchmark) / BP_DECIMAL;
+    let total_count = post.false_votes_count + post.true_votes_count + 1;
+    let author_reward = benchmark_value * (BP_DECIMAL - vote_delta) / (total_count * BP_DECIMAL);
+    author_reward
+}
+
+public fun calculate_post_vote_reward(post:&Post,config:&Config,vote_delta:u64):u64{
+    let author_reward = calculate_post_author_reward(post, config, vote_delta);
+    let votes_reward = post.total_votes_value - author_reward;
+    let true_bp = calculate_true_bp(post);
+    let mut vote_reward: u64 = 0;
+    if (true_bp > 5000) {
+        vote_reward = votes_reward / (post.true_votes_count);
+    } else {
+        vote_reward = votes_reward / (post.false_votes_count);
+    };
+    vote_reward
+}
+
+public fun calculate_vote_delta(post:&Post):u64{
+  if(post.true_bp > post.predicted_true_bp) {
+    post.true_bp - post.predicted_true_bp
+  } else {
+    post.predicted_true_bp - post.true_bp
+  }
+}
+
+public fun calculate_true_bp(post:&Post):u64{
+    let true_bp = post.true_votes_count * BP_DECIMAL / (post.true_votes_count + post.false_votes_count);
+    true_bp
 }
