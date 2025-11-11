@@ -83,10 +83,11 @@ public struct Post has key {
     lasting_time: u64,
     created_at: u64,
     predicted_true_bp: u64,
-    crypto_vote_result: CryptoVoteResult,
-    derived_vote_result: DerivedVoteResult,
-    status: u8,
+    total_votes_count: u64,
     total_votes_value: u64,
+    crypto_vote_result: CryptoVoteResult,
+    derived_vote_result: Option<DerivedVoteResult>,
+    status: u8,
     votes_pool: Balance<SUI>,
     author_claimed: bool,
 }
@@ -96,11 +97,10 @@ public struct CryptoVoteResult has store {
     public_keys: vector<vector<u8>>,
     threshold: u8,
     voters: vector<address>,
-    encrypted_votes: vector<Option<EncryptedObject>>,
+    encrypted_votes: vector<EncryptedObject>,
 }
 
 public struct DerivedVoteResult has store {
-    is_decrypted: bool,
     true_bp: u64,
     true_votes_count: u64,
     false_votes_count: u64,
