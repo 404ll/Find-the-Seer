@@ -1,11 +1,12 @@
 [package]
-name = "seer"
+name = "seal"
 edition = "2024.beta" # edition = "legacy" to use legacy (pre-2024) Move
 # license = ""           # e.g., "MIT", "GPL", "Apache 2.0"
 # authors = ["..."]      # e.g., ["Joe Smith (joesmith@noemail.com)", "John Snow (johnsnow@noemail.com)"]
+published-at = "0xfe2c71f4dc19cb596a5042bca40b9cd4b1e3517b37bc8c21491c3be33b3056af"
 
 [dependencies]
-seal = { local = "./seal" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.52.1" }
 
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
@@ -19,7 +20,6 @@ seal = { local = "./seal" }
 # Override = { local = "../conflicting/version", override = true }
 
 [addresses]
-seer = "0x0"
 seal = "0xfe2c71f4dc19cb596a5042bca40b9cd4b1e3517b37bc8c21491c3be33b3056af"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
