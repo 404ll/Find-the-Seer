@@ -23,7 +23,6 @@ use sui::coin::{Self, Coin};
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use std::option::{Option, Self};
 
 const EInvalidVoteTime: u64 = 0;
 const EAlreadyVoted: u64 = 1;
@@ -301,6 +300,8 @@ public fun vote_post(
     let encrypted_vote = parse_encrypted_object(crypto_vote_data);
     verify_crypto_vote(crypto_vote_result, &encrypted_vote, post_id.to_bytes());
 
+    post.total_votes_count = post.total_votes_count + 1;
+    post.total_votes_value = post.total_votes_value + config.vote_value;
     vector::push_back(&mut crypto_vote_result.encrypted_votes, encrypted_vote);
     vector::push_back(&mut post.voted_users, ctx.sender());
     vector::push_back(&mut post.voted_results, VOTE_FOR_CRYPTO);
@@ -342,20 +343,25 @@ public fun decrypt_and_settle_crypto_vote(post: &mut Post,derived_keys: vector<v
         vector::push_back(&mut decrypted_votes, decrypted_vote);
     });
 
+    let mut i = 0;
     decrypted_votes.do_ref!(|decrypted_vote| {
-        if (decrypted_vote.is_some()) {
-            let decrypted_vote = decrypted_vote.borrow();
-            if (decrypted_vote.length() == 1 && decrypted_vote[0] == 1) {
-                vector::push_back(&mut post.voted_results, VOTE_FOR_TRUE);
-                true_votes_count = true_votes_count + 1;
-            } else if (decrypted_vote.length() == 1 && decrypted_vote[0] == 0) {
-                vector::push_back(&mut post.voted_results, VOTE_FOR_FALSE);
-                false_votes_count = false_votes_count + 1;
-            } else{
-                vector::push_back(&mut post.voted_results, VOTE_FOR_NONE);
-            }
+    let vote_result_ref = vector::borrow_mut(&mut post.voted_results, i);
+    if (decrypted_vote.is_some()) {
+        let decrypted_vote = decrypted_vote.borrow();
+        if (decrypted_vote.length() == 1 && decrypted_vote[0] == 1) {
+            *vote_result_ref = VOTE_FOR_TRUE;
+            true_votes_count = true_votes_count + 1;
+        } else if (decrypted_vote.length() == 1 && decrypted_vote[0] == 0) {
+            *vote_result_ref = VOTE_FOR_FALSE;
+            false_votes_count = false_votes_count + 1;
+        } else {
+            *vote_result_ref = VOTE_FOR_NONE;
         }
-    });
+    } else {
+        *vote_result_ref = VOTE_FOR_NONE;
+    };
+    i = i + 1;
+});
     let true_bp = true_votes_count * BP_DECIMAL / (true_votes_count + false_votes_count);
     let derived_vote_result = DerivedVoteResult {
         true_bp: true_bp,
@@ -390,7 +396,7 @@ public fun claim_vote_rewards(
     let post_address = object::uid_to_address(&post.id);
     assert!(vector::contains(&account.voted_posts, &post_address), ENotVotedForPost);
     assert!(!vector::contains(&account.claimed_posts, &post_address), EAlreadyClaimed);
-    assert!(calculate_post_vote_reward_for_user(post, &ctx.sender()), ENotVotedForCorrect);
+    assert!(calculate_post_vote_reward_for_user(post, ctx.sender()), ENotVotedForCorrect);
     vector::push_back(&mut account.claimed_posts, post_address);
     let vote_reward = calculate_post_vote_reward(post, config);
     account.vote_profit = account.vote_profit + vote_reward;
@@ -482,9 +488,11 @@ public fun get_post_finish_time(post: &Post, clock: &Clock): u64 {
 
 // Rp = (P * α) * (1 - Δ) / (1 + N)
 public fun calculate_post_author_reward(post: &Post, config: &Config): u64 {
+    assert!(post.derived_vote_result.is_some(), ENotSettled);
     let vote_delta = calculate_vote_delta(post);
     let benchmark_value = (post.total_votes_value * config.reward_benchmark) / BP_DECIMAL;
-    let total_count = post.derived_vote_result.borrow().false_votes_count + post.derived_vote_result.borrow().true_votes_count + 1;
+    let derived_vote_result = post.derived_vote_result.borrow();
+    let total_count = derived_vote_result.false_votes_count + derived_vote_result.true_votes_count + 1;
     let author_reward = benchmark_value * (BP_DECIMAL - vote_delta) / (total_count * BP_DECIMAL);
     author_reward
 }
@@ -503,9 +511,15 @@ public fun calculate_post_vote_reward(post: &Post, config: &Config): u64 {
     vote_reward
 }
 
-public fun calculate_post_vote_reward_for_user(post: &Post, user: &address): bool {
+public fun calculate_post_vote_reward_for_user(post: &Post, user: address): bool {
+    assert!(post.derived_vote_result.is_some(), ENotSettled);
+    assert!(vector::contains(&post.voted_users, &user), ENotVotedForPost);
     let true_bp = post.derived_vote_result.borrow().true_bp;
-    if (true_bp > 5000) {
+    let user_index = post.voted_users.find_index!(|v| v == user).borrow();
+    let user_vote = post.voted_results[*user_index];
+    if (user_vote == VOTE_FOR_TRUE && true_bp > 5000) {
+        true
+    } else if (user_vote == VOTE_FOR_FALSE && true_bp < 5000) {
         true
     } else {
         false
