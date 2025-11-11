@@ -19,6 +19,7 @@ const EInvalidVoteTime: u64 = 0;
 const EAlreadyVoted: u64 = 1;
 const EInvalidSettleTime: u64 = 2;
 const EInvalidCoinValue: u64 = 4;
+const EVoteForPostAuthor: u64 = 5;
 const EInvalidPostAuthor: u64 = 6;
 const EInvalidBp: u64 = 7;
 const ENotEnoughFees: u64 = 8;
@@ -239,6 +240,7 @@ public fun vote_post(
     assert!(post.created_at + post.lasting_time > clock.timestamp_ms(), EInvalidVoteTime);
     assert!(!table::contains(&account.voted_posts, post_address), EAlreadyVoted);
     assert!(coin::value(&coin) == config.vote_value, EInvalidCoinValue);
+    assert!(post.author != ctx.sender(), EVoteForPostAuthor);
     table::add(&mut account.voted_posts, post_address, vote);
     coin::put(&mut post.votes_pool, coin);
     post.total_votes_value = post.total_votes_value + config.vote_value;
