@@ -14,6 +14,7 @@ use sui::coin::{Self, Coin};
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
+use seer::utils::to_b36;
 
 const EInvalidVoteTime: u64 = 0;
 const EAlreadyVoted: u64 = 1;
@@ -66,6 +67,7 @@ public struct Seer has key {
 
 public struct Post has key {
     id: UID,
+    b36_address: String,
     blob_id: String,
     author: address,
     lasting_time: u64,
@@ -196,6 +198,7 @@ public fun create_post(
     assert!(predicted_true_bp <= BP_DECIMAL, EInvalidBp);
     let id = object::new(ctx);
     let address = object::uid_to_address(&id);
+    let b36_address = to_b36(address);
     if (!table::contains(&seer.posts, ctx.sender())) {
         table::add(&mut seer.posts, ctx.sender(), vector::empty<address>());
     };
@@ -205,6 +208,7 @@ public fun create_post(
     coin::put(&mut seer.post_fees, coin);
     transfer::share_object(Post {
         id,
+        b36_address,
         blob_id,
         author: ctx.sender(),
         lasting_time,
