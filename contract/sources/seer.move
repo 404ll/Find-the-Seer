@@ -33,7 +33,6 @@ const EVoteForPostAuthor: u64 = 5;
 const EInvalidPostAuthor: u64 = 6;
 const EInvalidBp: u64 = 7;
 const ENotEnoughFees: u64 = 8;
-const EInvalidVoteForPost: u64 = 9;
 const ENotVotedForPost: u64 = 10;
 const EAlreadyClaimed: u64 = 11;
 const EInvalidKeyServers: u64 = 12;
@@ -41,7 +40,6 @@ const EInvalidThreshold: u64 = 13;
 const EInvalidEncryptedVote: u64 = 14;
 const EAlreadySettled: u64 = 15;
 const ENotEnoughDerivedKeys: u64 = 16;
-const EVoteNotDecrypted: u64 = 17;
 const ENotSettled: u64 = 18;
 
 const POST_STATUS_PENDING: u8 = 0;
@@ -317,7 +315,7 @@ public fun decrypt_and_settle_crypto_vote(post: &mut Post,derived_keys: vector<v
     let verified_derived_keys = verify_derived_keys(
         &derived_keys.map_ref!(|k| g1_from_bytes(k)),
         @seer, 
-        object::id(post).to_bytes(), 
+        object::id(post).to_bytes(),   
                 &key_servers
             .map_ref!(|ks1| crypto_vote_result.key_servers.find_index!(|ks2| ks1 == ks2).destroy_some())
             .map!(|i| new_public_key(crypto_vote_result.key_servers[i].to_id(), crypto_vote_result.public_keys[i])),
