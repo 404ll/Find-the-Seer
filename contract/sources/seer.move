@@ -28,6 +28,7 @@ use std::option::{Option, Self};
 const EInvalidVoteTime: u64 = 0;
 const EAlreadyVoted: u64 = 1;
 const EInvalidSettleTime: u64 = 2;
+const ENotVotedForCorrect: u64 = 3;
 const EInvalidCoinValue: u64 = 4;
 const EVoteForPostAuthor: u64 = 5;
 const EInvalidPostAuthor: u64 = 6;
@@ -47,6 +48,10 @@ const POST_STATUS_SUCCESS: u8 = 1;
 const POST_STATUS_FAILED: u8 = 2;
 const POST_STATUS_NO_VOTES: u8 = 3;
 
+const VOTE_FOR_CRYPTO: u8 = 0;
+const VOTE_FOR_TRUE: u8 = 1;
+const VOTE_FOR_FALSE: u8 = 2;
+const VOTE_FOR_NONE: u8 = 3;
 //万分比
 const BP_DECIMAL: u64 = 10000;
 
@@ -91,6 +96,8 @@ public struct Post has key {
     total_votes_value: u64,
     crypto_vote_result: CryptoVoteResult,
     derived_vote_result: Option<DerivedVoteResult>,
+    voted_users: vector<address>,
+    voted_results: vector<u8>,
     status: u8,
     votes_pool: Balance<SUI>,
     author_claimed: bool,
@@ -116,7 +123,7 @@ public struct Account has key {
     author_profit: u64,
     owned_posts: vector<address>,
     //post_address -> support or against
-    voted_posts: Table<address, EncryptedObject>,
+    voted_posts: vector<address>,
     //post_address -> claimed or not
     claimed_posts: vector<address>,
 }
@@ -200,7 +207,7 @@ public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
         vote_profit: 0,
         author_profit: 0,
         owned_posts: vector::empty<address>(),
-        voted_posts: table::new(ctx),
+        voted_posts: vector::empty<address>(),
         claimed_posts: vector::empty<address>(),
     };
     vector::push_back(&mut seer.accounts, address);
@@ -255,6 +262,8 @@ public fun create_post(
         lasting_time,
         created_at: clock.timestamp_ms(),
         predicted_true_bp,
+        voted_users: vector::empty<address>(),
+        voted_results: vector::empty<u8>(),
         total_votes_count: 0,
         total_votes_value: 0,
         crypto_vote_result: crypto_vote_result,
@@ -283,7 +292,7 @@ public fun vote_post(
 ) {
     let post_address = object::uid_to_address(&post.id);
     assert!(post.created_at + post.lasting_time > clock.timestamp_ms(), EInvalidVoteTime);
-    assert!(!table::contains(&account.voted_posts, post_address), EAlreadyVoted);
+    assert!(!vector::contains(&account.voted_posts, &post_address), EAlreadyVoted);
     assert!(coin::value(&coin) == config.vote_value, EInvalidCoinValue);
     assert!(post.author != ctx.sender(), EVoteForPostAuthor);
     coin::put(&mut post.votes_pool, coin);
@@ -291,9 +300,11 @@ public fun vote_post(
     let crypto_vote_result = &mut post.crypto_vote_result;
     let encrypted_vote = parse_encrypted_object(crypto_vote_data);
     verify_crypto_vote(crypto_vote_result, &encrypted_vote, post_id.to_bytes());
+
     vector::push_back(&mut crypto_vote_result.encrypted_votes, encrypted_vote);
-    //TODO:
-    table::add(&mut account.voted_posts, post_address, encrypted_vote);
+    vector::push_back(&mut post.voted_users, ctx.sender());
+    vector::push_back(&mut post.voted_results, VOTE_FOR_CRYPTO);
+    vector::push_back(&mut account.voted_posts, post_address);
     event::emit(VotePostEvent {
         post: post_address,
         user: ctx.sender(),
@@ -335,10 +346,14 @@ public fun decrypt_and_settle_crypto_vote(post: &mut Post,derived_keys: vector<v
         if (decrypted_vote.is_some()) {
             let decrypted_vote = decrypted_vote.borrow();
             if (decrypted_vote.length() == 1 && decrypted_vote[0] == 1) {
+                vector::push_back(&mut post.voted_results, VOTE_FOR_TRUE);
                 true_votes_count = true_votes_count + 1;
             } else if (decrypted_vote.length() == 1 && decrypted_vote[0] == 0) {
+                vector::push_back(&mut post.voted_results, VOTE_FOR_FALSE);
                 false_votes_count = false_votes_count + 1;
-            }   
+            } else{
+                vector::push_back(&mut post.voted_results, VOTE_FOR_NONE);
+            }
         }
     });
     let true_bp = true_votes_count * BP_DECIMAL / (true_votes_count + false_votes_count);
@@ -373,9 +388,9 @@ public fun claim_vote_rewards(
 ) {
     assert!(post.derived_vote_result.is_some(), ENotSettled);
     let post_address = object::uid_to_address(&post.id);
-    assert!(table::contains(&account.voted_posts, post_address), ENotVotedForPost);
-    let account_vote = table::borrow(&account.voted_posts, post_address);
+    assert!(vector::contains(&account.voted_posts, &post_address), ENotVotedForPost);
     assert!(!vector::contains(&account.claimed_posts, &post_address), EAlreadyClaimed);
+    assert!(calculate_post_vote_reward_for_user(post, &ctx.sender()), ENotVotedForCorrect);
     vector::push_back(&mut account.claimed_posts, post_address);
     let vote_reward = calculate_post_vote_reward(post, config);
     account.vote_profit = account.vote_profit + vote_reward;
@@ -488,6 +503,14 @@ public fun calculate_post_vote_reward(post: &Post, config: &Config): u64 {
     vote_reward
 }
 
+public fun calculate_post_vote_reward_for_user(post: &Post, user: &address): bool {
+    let true_bp = post.derived_vote_result.borrow().true_bp;
+    if (true_bp > 5000) {
+        true
+    } else {
+        false
+    }
+}
 public fun calculate_vote_delta(post: &Post): u64 {
     let derived_vote_result = post.derived_vote_result.borrow();
     if (derived_vote_result.true_bp > post.predicted_true_bp) {
