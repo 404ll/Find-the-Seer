@@ -222,9 +222,9 @@ public fun create_post(
     blob_id: String,
     lasting_time: u64,
     predicted_true_bp: u64,
-    key_servers: vector<address>, 
-    publickeys: vector<vector<u8>>, 
-    threshold: u8, 
+    key_servers: vector<address>,
+    publickeys: vector<vector<u8>>,
+    threshold: u8,
     account: &mut Account,
     seer: &mut Seer,
     coin: Coin<SUI>,
@@ -299,7 +299,6 @@ public fun vote_post(
     let crypto_vote_result = &mut post.crypto_vote_result;
     let encrypted_vote = parse_encrypted_object(crypto_vote_data);
     verify_crypto_vote(crypto_vote_result, &encrypted_vote, post_id.to_bytes());
-
     post.total_votes_count = post.total_votes_count + 1;
     post.total_votes_value = post.total_votes_value + config.vote_value;
     vector::push_back(&mut crypto_vote_result.encrypted_votes, encrypted_vote);
@@ -310,11 +309,17 @@ public fun vote_post(
         post: post_address,
         user: ctx.sender(),
         account: object::uid_to_address(&account.id),
-        vote_result:crypto_vote_data,
+        vote_result: crypto_vote_data,
     });
 }
 
-public fun decrypt_and_settle_crypto_vote(post: &mut Post,derived_keys: vector<vector<u8>>,key_servers: vector<address>,clock: &Clock, ctx: &mut TxContext) {
+public fun decrypt_and_settle_crypto_vote(
+    post: &mut Post,
+    derived_keys: vector<vector<u8>>,
+    key_servers: vector<address>,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
     if (post.total_votes_count == 0) {
         post.status = POST_STATUS_NO_VOTES;
     } else {
@@ -324,64 +329,76 @@ public fun decrypt_and_settle_crypto_vote(post: &mut Post,derived_keys: vector<v
 
         let crypto_vote_result = &post.crypto_vote_result;
         assert!(derived_keys.length() as u8 >= crypto_vote_result.threshold, ENotEnoughDerivedKeys);
-    let verified_derived_keys = verify_derived_keys(
-        &derived_keys.map_ref!(|k| g1_from_bytes(k)),
-        @seer, 
-        object::id(post).to_bytes(),   
-                &key_servers
-            .map_ref!(|ks1| crypto_vote_result.key_servers.find_index!(|ks2| ks1 == ks2).destroy_some())
-            .map!(|i| new_public_key(crypto_vote_result.key_servers[i].to_id(), crypto_vote_result.public_keys[i])),
-    );
-    let all_public_keys = crypto_vote_result.key_servers.zip_map!(crypto_vote_result.public_keys, |ks, pk| new_public_key(ks.to_id(), pk));
-    
-    let mut true_votes_count = 0;
-    let mut false_votes_count = 0;
-    let mut decrypted_votes = vector::empty<Option<vector<u8>>>();
+        let verified_derived_keys = verify_derived_keys(
+            &derived_keys.map_ref!(|k| g1_from_bytes(k)),
+            @seer,
+            object::id(post).to_bytes(),
+            &key_servers
+                .map_ref!(
+                    |ks1| crypto_vote_result
+                        .key_servers
+                        .find_index!(|ks2| ks1 == ks2)
+                        .destroy_some(),
+                )
+                .map!(
+                    |i| new_public_key(
+                        crypto_vote_result.key_servers[i].to_id(),
+                        crypto_vote_result.public_keys[i],
+                    ),
+                ),
+        );
+        let all_public_keys = crypto_vote_result
+            .key_servers
+            .zip_map!(crypto_vote_result.public_keys, |ks, pk| new_public_key(ks.to_id(), pk));
 
-    crypto_vote_result.encrypted_votes.do_ref!(|encrypted_vote| {
-        let decrypted_vote = decrypt(encrypted_vote, &verified_derived_keys, &all_public_keys);
-        vector::push_back(&mut decrypted_votes, decrypted_vote);
-    });
+        let mut true_votes_count = 0;
+        let mut false_votes_count = 0;
+        let mut decrypted_votes = vector::empty<Option<vector<u8>>>();
 
-    let mut i = 0;
-    decrypted_votes.do_ref!(|decrypted_vote| {
-    let vote_result_ref = vector::borrow_mut(&mut post.voted_results, i);
-    if (decrypted_vote.is_some()) {
-        let decrypted_vote = decrypted_vote.borrow();
-        if (decrypted_vote.length() == 1 && decrypted_vote[0] == 1) {
-            *vote_result_ref = VOTE_FOR_TRUE;
-            true_votes_count = true_votes_count + 1;
-        } else if (decrypted_vote.length() == 1 && decrypted_vote[0] == 0) {
-            *vote_result_ref = VOTE_FOR_FALSE;
-            false_votes_count = false_votes_count + 1;
+        crypto_vote_result.encrypted_votes.do_ref!(|encrypted_vote| {
+            let decrypted_vote = decrypt(encrypted_vote, &verified_derived_keys, &all_public_keys);
+            vector::push_back(&mut decrypted_votes, decrypted_vote);
+        });
+
+        let mut i = 0;
+        decrypted_votes.do_ref!(|decrypted_vote| {
+            let vote_result_ref = vector::borrow_mut(&mut post.voted_results, i);
+            if (decrypted_vote.is_some()) {
+                let decrypted_vote = decrypted_vote.borrow();
+                if (decrypted_vote.length() == 1 && decrypted_vote[0] == 1) {
+                    *vote_result_ref = VOTE_FOR_TRUE;
+                    true_votes_count = true_votes_count + 1;
+                } else if (decrypted_vote.length() == 1 && decrypted_vote[0] == 0) {
+                    *vote_result_ref = VOTE_FOR_FALSE;
+                    false_votes_count = false_votes_count + 1;
+                } else {
+                    *vote_result_ref = VOTE_FOR_NONE;
+                }
+            } else {
+                *vote_result_ref = VOTE_FOR_NONE;
+            };
+            i = i + 1;
+        });
+        let true_bp = true_votes_count * BP_DECIMAL / (true_votes_count + false_votes_count);
+        let derived_vote_result = DerivedVoteResult {
+            true_bp: true_bp,
+            true_votes_count: true_votes_count,
+            false_votes_count: false_votes_count,
+        };
+        post.derived_vote_result.fill(derived_vote_result);
+
+        if (true_bp > 5000) {
+            post.status = POST_STATUS_SUCCESS;
         } else {
-            *vote_result_ref = VOTE_FOR_NONE;
-        }
-    } else {
-        *vote_result_ref = VOTE_FOR_NONE;
-    };
-    i = i + 1;
-});
-    let true_bp = true_votes_count * BP_DECIMAL / (true_votes_count + false_votes_count);
-    let derived_vote_result = DerivedVoteResult {
-        true_bp: true_bp,
-        true_votes_count: true_votes_count,
-        false_votes_count: false_votes_count,
-    };
-    post.derived_vote_result.fill(derived_vote_result);
+            post.status = POST_STATUS_FAILED;
+        };
 
-    if(true_bp > 5000) {
-        post.status = POST_STATUS_SUCCESS;
-    } else {
-        post.status = POST_STATUS_FAILED;
+        event::emit(PostSettleEvent {
+            post: object::uid_to_address(&post.id),
+            settle: object::uid_to_address(&post.id),
+            status: post.status,
+        });
     };
-
-    event::emit(PostSettleEvent {
-        post: object::uid_to_address(&post.id),
-        settle: object::uid_to_address(&post.id),
-        status: post.status,
-    });
-};
 }
 
 //TODO:领取金额要改
@@ -492,7 +509,8 @@ public fun calculate_post_author_reward(post: &Post, config: &Config): u64 {
     let vote_delta = calculate_vote_delta(post);
     let benchmark_value = (post.total_votes_value * config.reward_benchmark) / BP_DECIMAL;
     let derived_vote_result = post.derived_vote_result.borrow();
-    let total_count = derived_vote_result.false_votes_count + derived_vote_result.true_votes_count + 1;
+    let total_count =
+        derived_vote_result.false_votes_count + derived_vote_result.true_votes_count + 1;
     let author_reward = benchmark_value * (BP_DECIMAL - vote_delta) / (total_count * BP_DECIMAL);
     author_reward
 }
@@ -525,6 +543,7 @@ public fun calculate_post_vote_reward_for_user(post: &Post, user: address): bool
         false
     }
 }
+
 public fun calculate_vote_delta(post: &Post): u64 {
     let derived_vote_result = post.derived_vote_result.borrow();
     if (derived_vote_result.true_bp > post.predicted_true_bp) {
@@ -540,13 +559,24 @@ public fun calculate_true_bp(post: &Post): u64 {
     true_bp
 }
 
-fun verify_crypto_vote(crypto_vote_result: &CryptoVoteResult, encrypted_vote: &EncryptedObject, post_id: vector<u8>) {
+public fun seal_approve(post_id: vector<u8>, post: &Post, clock: &Clock) {
+    assert!(post_id == object::id(post).to_bytes(), EInvalidVote);
+    let end_time = post.created_at + post.lasting_time;
+    assert!(clock.timestamp_ms() >= end_time, ENoAccess);
+}
+
+fun verify_crypto_vote(
+    crypto_vote_result: &CryptoVoteResult,
+    encrypted_vote: &EncryptedObject,
+    post_id: vector<u8>,
+) {
+    assert!(encrypted_vote.aad().borrow() == ctx.sender().to_bytes(), EInvalidEncryptedVote);
     assert!(encrypted_vote.services() == crypto_vote_result.key_servers, EInvalidEncryptedVote);
     assert!(encrypted_vote.threshold() == crypto_vote_result.threshold, EInvalidEncryptedVote);
     assert!(encrypted_vote.id() == post_id, EInvalidEncryptedVote);
     assert!(encrypted_vote.package_id() == @seer, EInvalidEncryptedVote);
 }
-    
+
 #[test_only]
 public fun init_for_testing(ctx: &mut TxContext) {
     init(ctx);
