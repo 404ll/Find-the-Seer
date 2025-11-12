@@ -1,63 +1,66 @@
-import { networkConfig } from "@/contracts/index";
+import { SessionKey, SealClient } from '@mysten/seal';
+import { SuiClient } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';
+
 /**
- * 从密钥服务器获取派生密钥
- * @param postId - 帖子 ID
- * @param keyServerUrls - 密钥服务器 API 地址
- * @param threshold - 需要几个密钥
- * @returns 派生密钥和对应的服务器地址
+ * 使用 SealClient 获取派生密钥（用于合约解密）
  */
-export async function fetchDerivedKeysForPost(
-    postId: string,
-    keyServerUrls: string[],
-    threshold: number = 2
-  ): Promise<{
-    derivedKeys: string[];        // 十六进制字符串数组
-    keyServerAddresses: string[]; // 对应的服务器地址
-  }> {
-    const derivedKeys: string[] = [];
-    const keyServerAddresses: string[] = [];
-    
-    for (let i = 0; i < keyServerUrls.length && derivedKeys.length < threshold; i++) {
-      try {
-        const response = await fetch(keyServerUrls[i], {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            packageId: networkConfig.testnet.variables.Package,
-            postId: postId,
-          })
-        });
-        
-        if (!response.ok) {
-          console.warn(`密钥服务器 ${i} 返回错误: ${response.statusText}`);
-          continue;
-        }
-        
-        const data = await response.json();
-        
-        derivedKeys.push(data.derivedKey);
-        keyServerAddresses.push(data.address); 
-        
-      } catch (error) {
-        console.error(`从服务器 ${i} 获取密钥失败:`, error);
-      }
-    }
-    
-    if (derivedKeys.length < threshold) {
-      throw new Error(`只获取到 ${derivedKeys.length} 个密钥，需要至少 ${threshold} 个`);
-    }
-    
-    return {
-      derivedKeys: derivedKeys.slice(0, threshold),
-      keyServerAddresses: keyServerAddresses.slice(0, threshold)
-    };
-  }
+export async function fetchDerivedKeysForContract(
+  postId: string,
+  packageId: string,
+  userAddress: string,
+  suiClient: SuiClient,
+  sealClient: SealClient,
+  signPersonalMessage: (args: { message: Uint8Array }) => Promise<{ signature: string }>
+): Promise<{
+  derivedKeys: Uint8Array[];        
+  keyServerAddresses: string[];   
+}> {
+  // 1. 使用 create 方法创建 SessionKey（异步）
+  const sessionKey = await SessionKey.create({
+    address: userAddress,
+    packageId: packageId,
+    ttlMin: 10,
+    suiClient: suiClient,
+  });
+
+  // 2. 获取需要签名的消息
+  const message = sessionKey.getPersonalMessage();
   
-  export function hexToBytes(hex: string): number[] {
-    const cleanHex = hex.replace('0x', '');
-    const bytes: number[] = [];
-    for (let i = 0; i < cleanHex.length; i += 2) {
-      bytes.push(parseInt(cleanHex.substr(i, 2), 16));
-    }
-    return bytes;
-  }
+  // 3. 签名消息
+  const { signature } = await signPersonalMessage({ message });
+  
+  // 4. 设置签名到 SessionKey
+  await sessionKey.setPersonalMessageSignature(signature);
+
+  // 5. 构造访问控制交易
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${packageId}::seer::seal_approve`,
+    arguments: [
+      tx.pure.vector("u8", Array.from(Buffer.from(postId.replace('0x', ''), 'hex'))),
+      tx.object(postId),
+    ],
+  });
+
+  const txBytes = await tx.build({ 
+    client: suiClient, 
+    onlyTransactionKind: true 
+  });
+
+  const derivedKeys = await sealClient.getDerivedKeys({ 
+    id: postId, 
+    txBytes, 
+    sessionKey, 
+    threshold: 2 
+  });
+
+  const derivedKeysArray: Uint8Array[] = Array.from(derivedKeys.values()).map(
+    (k: any) =>
+      k instanceof Uint8Array ? k : (k.key instanceof Uint8Array ? k.key : new Uint8Array(k))
+  );
+  return {
+    derivedKeys: derivedKeysArray,
+    keyServerAddresses: Array.from(derivedKeys.keys())
+  };
+}

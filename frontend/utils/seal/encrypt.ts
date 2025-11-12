@@ -22,7 +22,7 @@ function getTestnetKeyServers(): KeyServerConfig[] {
   }
 
   const suiClient = new SuiClient({
-    url: networkConfig.testnet.variables.RPC,
+    url: networkConfig.testnet.variables.packageId,
   });
 
   const serverConfigs = getTestnetKeyServers();
