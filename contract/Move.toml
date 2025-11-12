@@ -20,7 +20,7 @@ seal = { local = "./seal" }
 
 [addresses]
 seer = "0x0"
-seal = "0xfe2c71f4dc19cb596a5042bca40b9cd4b1e3517b37bc8c21491c3be33b3056af"
+seal = "0x4408a42943961f17f805a05fff08c805eb8ee68bb43796773a4514a3ec849aca"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
 # for example, `std = "0x1"` is exported by the Standard Library.

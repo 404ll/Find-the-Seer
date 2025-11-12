@@ -2,10 +2,10 @@
 compiled_package_info:
   package_name: seal
   address_alias_instantiation:
-    seal: fe2c71f4dc19cb596a5042bca40b9cd4b1e3517b37bc8c21491c3be33b3056af
+    seal: "0000000000000000000000000000000000000000000000000000000000000000"
     std: "0000000000000000000000000000000000000000000000000000000000000001"
     sui: "0000000000000000000000000000000000000000000000000000000000000002"
-  source_digest: 9D0646E2BA4678EABE2F9696CE2F1C491330AF54219B9FDEDBF574E1800A858C
+  source_digest: 15B6119577DAF2DB42E4C3D935D58714C6AF500E325DA1182206737D1C91DE58
   build_flags:
     dev_mode: false
     test_mode: false
@@ -33,7 +33,7 @@ compiled_package_info:
           kind:
             Git:
               git_url: "https://github.com/MystenLabs/sui.git"
-              git_rev: 61dcfdbe2ddc7ad05d27fc10cd09d4c6cc151acd
+              git_rev: 664b05b3b047c5bb03979d093660176176ea6175
               subdir: crates/sui-framework/packages/bridge
           subst: ~
           digest: ~
@@ -43,7 +43,7 @@ compiled_package_info:
           kind:
             Git:
               git_url: "https://github.com/MystenLabs/sui.git"
-              git_rev: 61dcfdbe2ddc7ad05d27fc10cd09d4c6cc151acd
+              git_rev: 664b05b3b047c5bb03979d093660176176ea6175
               subdir: crates/sui-framework/packages/move-stdlib
           subst: ~
           digest: ~
@@ -53,7 +53,7 @@ compiled_package_info:
           kind:
             Git:
               git_url: "https://github.com/MystenLabs/sui.git"
-              git_rev: 61dcfdbe2ddc7ad05d27fc10cd09d4c6cc151acd
+              git_rev: 664b05b3b047c5bb03979d093660176176ea6175
               subdir: crates/sui-framework/packages/sui-framework
           subst: ~
           digest: ~
@@ -63,7 +63,7 @@ compiled_package_info:
           kind:
             Git:
               git_url: "https://github.com/MystenLabs/sui.git"
-              git_rev: 61dcfdbe2ddc7ad05d27fc10cd09d4c6cc151acd
+              git_rev: 664b05b3b047c5bb03979d093660176176ea6175
               subdir: crates/sui-framework/packages/sui-system
           subst: ~
           digest: ~
