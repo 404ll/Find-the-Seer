@@ -2,6 +2,8 @@ import { isValidSuiAddress } from "@mysten/sui/utils";
 import { suiClient } from "./index";
 import { SuiObjectResponse } from "@mysten/sui/client";
 import { categorizeSuiObjects, CategorizedObjects } from "@/utils/assetsHelpers";
+import { networkConfig } from "./index";
+
 
 export const getUserProfile = async (address: string): Promise<CategorizedObjects> => {
   if (!isValidSuiAddress(address)) {
@@ -27,4 +29,20 @@ export const getUserProfile = async (address: string): Promise<CategorizedObject
   }
 
   return categorizeSuiObjects(allObjects);
+};
+
+
+export const getSeer = async (): Promise<SuiObjectResponse> => {
+
+  const response = await suiClient.getObject({
+    id: networkConfig.testnet.variables.Seer,
+  });
+
+  return response;
+};
+
+export const createAccount = async () => {
+
+
+  return response;
 };

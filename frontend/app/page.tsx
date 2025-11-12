@@ -3,10 +3,19 @@ import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getSeer } from "@/contracts/query";
 
 export default function Home() {
   const currentAccount = useCurrentAccount();
   const router = useRouter();
+
+
+  useEffect(() => {
+      getSeer().then((response) => {
+        console.log(response);
+    });
+  }, []);
+
 
   useEffect(() => {
     // 当钱包连接成功后，跳转到 home 页面
@@ -17,8 +26,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-black">
-     
-
       <div className="flex-grow flex flex-col items-center p-8 justify-center">
         <h1 className="text-8xl font-cbyg text-white mb-24">Find The Seer</h1>
         <h3 className="text-4xl font-cbyg text-white mb-24 tracking-wider">
