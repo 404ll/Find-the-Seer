@@ -40,6 +40,7 @@ const EInvalidThreshold: u64 = 13;
 const EInvalidEncryptedVote: u64 = 14;
 const EAlreadySettled: u64 = 15;
 const ENotEnoughDerivedKeys: u64 = 16;
+const ENoAccess: u64 = 17;
 const ENotSettled: u64 = 18;
 
 const POST_STATUS_PENDING: u8 = 0;
@@ -298,7 +299,7 @@ public fun vote_post(
     let post_id = object::id(post);
     let crypto_vote_result = &mut post.crypto_vote_result;
     let encrypted_vote = parse_encrypted_object(crypto_vote_data);
-    verify_crypto_vote(crypto_vote_result, &encrypted_vote, post_id.to_bytes());
+    verify_crypto_vote(crypto_vote_result, &encrypted_vote, post_id.to_bytes(), ctx);
     post.total_votes_count = post.total_votes_count + 1;
     post.total_votes_value = post.total_votes_value + config.vote_value;
     vector::push_back(&mut crypto_vote_result.encrypted_votes, encrypted_vote);
@@ -559,8 +560,7 @@ public fun calculate_true_bp(post: &Post): u64 {
     true_bp
 }
 
-public fun seal_approve(post_id: vector<u8>, post: &Post, clock: &Clock) {
-    assert!(post_id == object::id(post).to_bytes(), EInvalidVote);
+public fun seal_approve(post: &Post, clock: &Clock) {
     let end_time = post.created_at + post.lasting_time;
     assert!(clock.timestamp_ms() >= end_time, ENoAccess);
 }
@@ -569,6 +569,7 @@ fun verify_crypto_vote(
     crypto_vote_result: &CryptoVoteResult,
     encrypted_vote: &EncryptedObject,
     post_id: vector<u8>,
+    ctx: &mut TxContext,
 ) {
     assert!(encrypted_vote.aad().borrow() == ctx.sender().to_bytes(), EInvalidEncryptedVote);
     assert!(encrypted_vote.services() == crypto_vote_result.key_servers, EInvalidEncryptedVote);
