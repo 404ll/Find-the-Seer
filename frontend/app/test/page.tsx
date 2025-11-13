@@ -12,18 +12,18 @@ import {
   claimVoteRewardsForAuthor,
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { getPosts,getAccount,getSeer } from "@/contracts/query";
+import { getPosts, getAccount, getSeer } from "@/contracts/query";
 import { useEffect } from "react";
+import { useVote } from "@/hooks/useVote";
 
 
 export default function TestPage() {
+
   const KEY_SERVER_0 = '0x34401905bebdf8c04f3cd5f04f442a39372c8dc321c29edfb4f9cb30b23ab96';
-const KEY_SERVER_1 = '0xd726ecf6f7036ee3557cd6c7b93a49b231070e8eecada9cfa157e40e3f02e5d3';
-const KEY_SERVER_2 = '0xdba72804cc9504a82bbaa13ed4a83a0e2c6219d7e45125cf57fd10cbab957a97';
-const KEY_SERVERS = [KEY_SERVER_0, KEY_SERVER_1, KEY_SERVER_2];
-
-
-function hexToBytes(hex: string): number[] {
+  const KEY_SERVER_1 = '0xd726ecf6f7036ee3557cd6c7b93a49b231070e8eecada9cfa157e40e3f02e5d3';
+  const KEY_SERVER_2 = '0xdba72804cc9504a82bbaa13ed4a83a0e2c6219d7e45125cf57fd10cbab957a97';
+  const KEY_SERVERS = [KEY_SERVER_0, KEY_SERVER_1, KEY_SERVER_2];
+  function hexToBytes(hex: string): number[] {
     // 移除可能的 '0x' 前缀
     const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
     const bytes: number[] = [];
@@ -32,16 +32,18 @@ function hexToBytes(hex: string): number[] {
     }
     return bytes;
   }
-let pk0 = 'a58bfa576a8efe2e2730bc664b3dbe70257d8e35106e4af7353d007dba092d722314a0aeb6bca5eed735466bbf471aef01e4da8d2efac13112c51d1411f6992b8604656ea2cf6a33ec10ce8468de20e1d7ecbfed8688a281d462f72a41602161';
-let pk1 = 'a9ce55cfa7009c3116ea29341151f3c40809b816f4ad29baa4f95c1bb23085ef02a46cf1ae5bd570d99b0c6e9faf525306224609300b09e422ae2722a17d2a969777d53db7b52092e4d12014da84bffb1e845c2510e26b3c259ede9e42603cd6';
-let pk2 = '93b3220f4f3a46fb33074b590cda666c0ebc75c7157d2e6492c62b4aebc452c29f581361a836d1abcbe1386268a5685103d12dec04aadccaebfa46d4c92e2f2c0381b52d6f2474490d02280a9e9d8c889a3fce2753055e06033f39af86676651';
-const PUBLIC_KEYS: number[][] = [
+  let pk0 = 'a58bfa576a8efe2e2730bc664b3dbe70257d8e35106e4af7353d007dba092d722314a0aeb6bca5eed735466bbf471aef01e4da8d2efac13112c51d1411f6992b8604656ea2cf6a33ec10ce8468de20e1d7ecbfed8688a281d462f72a41602161';
+  let pk1 = 'a9ce55cfa7009c3116ea29341151f3c40809b816f4ad29baa4f95c1bb23085ef02a46cf1ae5bd570d99b0c6e9faf525306224609300b09e422ae2722a17d2a969777d53db7b52092e4d12014da84bffb1e845c2510e26b3c259ede9e42603cd6';
+  let pk2 = '93b3220f4f3a46fb33074b590cda666c0ebc75c7157d2e6492c62b4aebc452c29f581361a836d1abcbe1386268a5685103d12dec04aadccaebfa46d4c92e2f2c0381b52d6f2474490d02280a9e9d8c889a3fce2753055e06033f39af86676651';
+  const PUBLIC_KEYS: number[][] = [
     hexToBytes(pk0),
     hexToBytes(pk1),
     hexToBytes(pk2),
   ];
-
   const THRESHOLD = 2;
+
+  const { vote, isEncrypting, error: voteError } = useVote();
+
 
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction, isPending } = useSignAndExecuteTransaction();
@@ -69,22 +71,24 @@ const PUBLIC_KEYS: number[][] = [
   const [derivedKeys, setDerivedKeys] = useState<number[][]>([]);
   const [settleKeyServers, setSettleKeyServers] = useState<string[]>([]);
 
-  useEffect(() => {
-    getSeer().then((response) => {
-      console.log("ddd",response);
-    });
-  //   getPosts(["0xe27fea7f062097c61e00d5e60a5f45873952ec89d5b99a4be5f7c424a39cbcc8"]).then((response) => {
-  //     console.log(response);
-  // });
-}, []);
+  
 
-useEffect(() => {
-  if (currentAccount) {
-    getAccount(currentAccount.address).then((response) => {
-      console.log(response);
-    });
-  }
-}, [currentAccount]);
+  useEffect(() => {
+    // getSeer().then((response) => {
+    //   console.log("ddd", response);
+    // });
+    //   getPosts(["0xe27fea7f062097c61e00d5e60a5f45873952ec89d5b99a4be5f7c424a39cbcc8"]).then((response) => {
+    //     console.log(response);
+    // });
+  }, []);
+
+  useEffect(() => {
+    if (currentAccount) {
+      getAccount(currentAccount.address).then((response) => {
+        console.log(response);
+      });
+    }
+  }, [currentAccount]);
 
   const handleExecute = async (txPromise: Promise<any>) => {
     try {
@@ -92,7 +96,7 @@ useEffect(() => {
       setResult("构建交易中...");
       const tx = await txPromise;
       setResult("等待签名...");
-      
+
       signAndExecuteTransaction(
         { transaction: tx },
         {
@@ -147,26 +151,31 @@ useEffect(() => {
       )
     );
   };
-
-  const handleVotePost = () => {
+  const handleVotePost = async () => {
     if (!currentAccount) {
       setError("请先连接钱包");
       return;
     }
     if (!postId || !accountId) {
-      setError("请输入 Post ID 和 Account ID");
+      setError("请填写所有必填字段");
       return;
     }
-    handleExecute(
-      votePost(
-        currentAccount.address,
+  
+    try {
+      const tx = await vote(
         postId,
         accountId,
-        cryptoVoteData,
-        coin
-      )
-    );
+        true,
+        2
+      );
+  
+      // 执行交易
+      handleExecute(Promise.resolve(tx));
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
+  
 
   const handleDecryptAndSettle = () => {
     if (!currentAccount) {

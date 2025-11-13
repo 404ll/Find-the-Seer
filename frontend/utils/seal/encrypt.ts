@@ -1,7 +1,6 @@
 import { SealClient, KeyServerConfig } from '@mysten/seal';
-import { SuiClient } from '@mysten/sui/client';
 import { networkConfig } from "@/contracts/index";
-
+import { suiClient } from '@/contracts/index';
 
 //从合约对象中取得
 function getTestnetKeyServers(): KeyServerConfig[] {
@@ -20,10 +19,6 @@ function getTestnetKeyServers(): KeyServerConfig[] {
       },
     ];
   }
-
-  const suiClient = new SuiClient({
-    url: networkConfig.testnet.variables.packageId,
-  });
 
   const serverConfigs = getTestnetKeyServers();
 
@@ -70,7 +65,6 @@ export async function encryptVote(
  * 批量为多个投票者加密（用于测试）
  */
 export async function encryptMultipleVotes(
-  sealClient: SealClient,
   votes: Array<{
     choice: boolean;
     address: string;

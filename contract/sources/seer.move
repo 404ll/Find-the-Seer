@@ -198,6 +198,7 @@ fun init(ctx: &mut TxContext) {
     });
 }
 
+//TODO改为package方法调用
 public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
     let id = object::new(ctx);
     let address = object::uid_to_address(&id);

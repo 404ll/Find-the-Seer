@@ -41,7 +41,6 @@ export const getSeer = async (): Promise<Seer> => {
     readMask: {
       paths: [
         "contents",
-        "json"
       ],
     },
   });
