@@ -25,14 +25,16 @@ export function useWalrusDownload(blobId: string | null) {
       setError(null);
 
       try {
-        const blob = await downloadBlob({ blobId: blobId! });
+        const result = await downloadBlob({ blobId: blobId! });
 
         if (cancelled) return;
 
-        const mime = detectMimeType(blob);
-        const url = URL.createObjectURL(new Blob([blob as any], { type: mime }));
+        // 使用从 tags 中提取的 MIME 类型，如果没有则使用检测到的
+        const mime = result.mimeType || detectMimeType(result.bytes);
+        const bytes = new Uint8Array(result.bytes);
+        const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
 
-        setData(blob);
+        setData(result.bytes);
         setMimeType(mime);
         setObjectUrl(url);
       } catch (err: any) {

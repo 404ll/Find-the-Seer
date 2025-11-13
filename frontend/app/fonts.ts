@@ -1,5 +1,5 @@
 import localFont from "next/font/local";
-import { Inter } from "next/font/google";
+
 export const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -12,9 +12,11 @@ export const geistMono = localFont({
   weight: "100 900",
 });
 
-export const inter = Inter({
-  subsets: ["latin"],    
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+// 使用本地 Geist 字体替代 Inter，避免 Google Fonts 网络请求超时
+export const inter = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-inter",
+  weight: "100 900",
 });
 
 export const cbyg = localFont({
