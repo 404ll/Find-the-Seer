@@ -7,14 +7,6 @@ export interface DownloadOptions {
   maxRetries?: number;
 }
 
-interface DownloadBlobResult {
-  file: WalrusFile;
-  content: string;
-  bytes: Uint8Array;
-  identifier: string | null;
-  tags: Record<string, string>;
-}
-
 async function downloadBlob(
   options: DownloadOptions
 ): Promise<WalrusFile> {

@@ -25,16 +25,36 @@ export default function PostCard({ post, onClick }: PostCardProps) {
             minute: '2-digit'
         });
     };
+
+    const getTitle = (content: string) => {
+        // 查找第一个标题（以 # 开头的行）
+        const lines = content.split('\n');
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            // 匹配 #、##、### 等标题
+            if (trimmedLine.startsWith('# ')) {
+                return trimmedLine.replace(/^#\s+/, '');
+            }
+            if (trimmedLine.startsWith('## ')) {
+                return trimmedLine.replace(/^##\s+/, '');
+            }
+            if (trimmedLine.startsWith('### ')) {
+                return trimmedLine.replace(/^###\s+/, '');
+            }
+        }
+        // 如果没有找到标题，返回前50个字符作为预览
+        const plainText = content.replace(/#+\s/g, "").replace(/[*_`[\]()]/g, "").trim();
+        return plainText.length > 0 ? (plainText.slice(0, 50) + (plainText.length > 50 ? "..." : "")) : "No title";
+    }
+
     return (
         <div 
             className='bg-white rounded-[12px] p-4 flex flex-col gap-4 cursor-pointer hover:scale-105 transition-transform duration-300' 
             onClick={handleCardClick}
         >
-            {/*截断显示content，超过100字符后显示...*/}
-            <h1 className='text-black text-2xl font-cbyg text-center '>{post.content.length > 40 ? post.content.slice(0, 40) + '...' : post.content}</h1>
-            <div className='flex justify-center'>
-                {post.image && <Image src={post.image} alt="Post Image" width={100} height={100} />}
-            </div>
+            {/*显示第一个标题*/}
+            <h1 className='text-black text-2xl font-cbyg text-center '>{getTitle(post.content)}</h1>
+
             <hr className='border-black border-1' />
             <div className='flex flex-row justify-between items-center gap-4 text-white text-2xl font-cbyg'>    
            {/* 截止时间 */} 

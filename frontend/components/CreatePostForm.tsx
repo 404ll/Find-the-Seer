@@ -3,13 +3,10 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MDEditor from "./MdEditor";
 import { WalrusFile } from "@mysten/walrus";
 import { uploadPostContent } from "@/utils/walrus/upload";
-import { readUserPostContent } from "@/utils/walrus/download";
 
 export default function CreatePostForm({ onClose }: { onClose: () => void }) {
   const [epoch, setEpoch] = useState<number>(1);
@@ -36,7 +33,6 @@ export default function CreatePostForm({ onClose }: { onClose: () => void }) {
     }
 
     // 使用代付，不需要检查钱包连接
-
     setIsUploading(true);
     setUploadError(null);
 

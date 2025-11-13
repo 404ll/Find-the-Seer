@@ -7,7 +7,7 @@ import PostDetail from '@/components/PostDetail';
 import Image from 'next/image';
 const posts: Post[] = [
       {
-          content: "The world is ending in 100 seconds from now hfoasblsdjfpdsahvpainvpaivnpaijsdvpiadhnvpiadhnvcoasbcoasbcoabcoajbobcoasbcoasubcoausbcoasbcoausbc",
+          content: "# The World is Ending\n\nIn **100 seconds** from now, the world as we know it will come to an end.\n\n## What to expect:\n- Complete chaos\n- Final moments\n- The end of everything\n\n> This is a prophecy that cannot be ignored.",
           createdAt: "2025-01-01",
           lastingTime: 100,
           trueVotesCount: 45,
@@ -17,7 +17,7 @@ const posts: Post[] = [
           trueFalseRatio: 7,
       },
       {
-          content: "The world is ending",
+          content: "# Prophecy of Change\n\nThe world is ending, but this is not the end. It is a **new beginning**.\n\n## Signs to watch:\n1. The stars will align\n2. The earth will shake\n3. A new era will dawn",
           createdAt: "2025-01-01",
           lastingTime: 100,
           trueVotesCount: 30,
@@ -27,7 +27,7 @@ const posts: Post[] = [
           trueFalseRatio: 6,
       },
       {
-          content: "The world is ending",
+          content: "## Silent Prophecy\n\nSometimes, the most powerful messages are those left unspoken.\n\n*The silence speaks volumes.*",
           createdAt: "2025-01-01",
           lastingTime: 100,
           trueVotesCount: 25,
@@ -37,7 +37,7 @@ const posts: Post[] = [
           trueFalseRatio: 5,
       },
       {
-          content: "The world is ending",
+          content: "# The Final Countdown\n\n**Time is running out.**\n\nThe world is ending, and we must prepare.\n\n### What we know:\n- The prophecy is clear\n- The signs are everywhere\n- The end is near\n\n> Trust in the prophecy.",
           createdAt: "2025-01-01",
           lastingTime: 100,
           trueVotesCount: 50,
@@ -47,7 +47,7 @@ const posts: Post[] = [
           trueFalseRatio: 8,
       },
       {
-          content: "The world is ending",
+          content: "# Past Prophecy\n\nThis prophecy has already come to pass.\n\nThe world ended, and we survived.\n\n## Lessons learned:\n- Prophecies can be true\n- But we are stronger\n- We endure",
           createdAt: "2025-01-01",
           lastingTime: 0,
           trueVotesCount: 20,
@@ -57,7 +57,7 @@ const posts: Post[] = [
           trueFalseRatio: 4,
       },
       {
-          content: "The world is ending",
+          content: "## The Seer's Vision\n\nThe world is ending, but not in the way you think.\n\n**Key points:**\n- Transformation, not destruction\n- Evolution, not extinction\n- Hope, not despair\n\n> The future is unwritten.",
           createdAt: "2025-01-01",
           lastingTime: 100,
           trueVotesCount: 40,

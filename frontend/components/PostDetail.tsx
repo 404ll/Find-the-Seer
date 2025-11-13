@@ -1,6 +1,5 @@
 import { Post } from "@/types/display";
-import Image from "next/image";
-
+import { parseMarkdown } from "@/utils/markdownParse";
 interface PostDetailProps {
     post: Post;
     onClose?: () => void;
@@ -32,6 +31,7 @@ export default function PostDetail({ post, onClose }: PostDetailProps) {
         return `${minutes}分钟`;
     };
 
+
     return (
         <div 
             className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -55,23 +55,9 @@ export default function PostDetail({ post, onClose }: PostDetailProps) {
             <div className="flex flex-col gap-4">
                 <h1 className="text-black text-2xl font-cbyg text-center whitespace-pre-wrap break-words max-w-full overflow-hidden" 
                     style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {post.content}
+                    {parseMarkdown(post.content)}
                 </h1>
 
-                {/* 图片 */}
-                {post.image && (
-                    <div className="flex justify-center my-4">
-                        <div className="relative w-full max-w-md h-auto rounded-lg overflow-hidden">
-                            <Image 
-                                src={post.image} 
-                                alt="Post Image" 
-                                width={300} 
-                                height={300}
-                                className="w-full h-auto object-contain"
-                            />
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* 黑色信息框 */}

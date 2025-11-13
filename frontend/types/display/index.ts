@@ -1,6 +1,5 @@
 export interface Post {
     content: string;
-    image?: string;
     createdAt: string;
     lastingTime: number;
     trueVotesCount: number;
@@ -15,7 +14,6 @@ export interface CreatePostForm {
     epoch: number;
     trueRatio: number;
     falseRatio: number;
-    image: string;
     content: string;
 }
 
