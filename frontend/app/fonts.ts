@@ -20,7 +20,7 @@ export const inter = localFont({
 });
 
 export const cbyg = localFont({
-  src: "./fonts/CoveredByYourGrace-Regular.ttf",
+  src: "./fonts/DynaPuff-Regular.ttf",
   variable: "--font-cbyg",
   weight: "400",
 })

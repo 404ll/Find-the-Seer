@@ -5,6 +5,28 @@ interface OwnPostCardProps {
     onClick?: () => void;
 }
 
+
+const getTitle = (content: string) => {
+    // 查找第一个标题（以 # 开头的行）
+    const lines = content.split('\n');
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        // 匹配 #、##、### 等标题
+        if (trimmedLine.startsWith('# ')) {
+            return trimmedLine.replace(/^#\s+/, '');
+        }
+        if (trimmedLine.startsWith('## ')) {
+            return trimmedLine.replace(/^##\s+/, '');
+        }
+        if (trimmedLine.startsWith('### ')) {
+            return trimmedLine.replace(/^###\s+/, '');
+        }
+    }
+    // 如果没有找到标题，返回前50个字符作为预览
+    const plainText = content.replace(/#+\s/g, "").replace(/[*_`[\]()]/g, "").trim();
+    return plainText.length > 0 ? (plainText.slice(0, 25) + (plainText.length > 25 ? "..." : "")) : "No title";
+}
+
 export default function OwnPostCard({ post, onClick }: OwnPostCardProps) {
 
     return (
@@ -13,7 +35,7 @@ export default function OwnPostCard({ post, onClick }: OwnPostCardProps) {
             onClick={onClick}
         >
             <div className='flex flex-row justify-between items-center gap-4 text-white text-2xl font-cbyg'>
-                <div>{post.content.length > 25 ? post.content.slice(0, 25) + '...' : post.content}</div>
+                <div>{getTitle(post.content)}</div>
                 {post.status === 'Active' ? <div className="bg-[#679533] rounded-[8px] p-2 text-black text-xl font-cbyg justify-end">Active</div> : <div className="bg-[#BDBDBD] rounded-[8px] p-2 text-white text-xl font-cbyg justify-center">Closed</div>}
             </div>
         </div>
