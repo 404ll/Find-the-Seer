@@ -12,7 +12,7 @@ import {
   claimVoteRewardsForAuthor,
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { getSeer,getAccount } from "@/contracts/query";
+import { getPosts,getAccount,getSeer } from "@/contracts/query";
 import { useEffect } from "react";
 
 
@@ -71,9 +71,13 @@ const PUBLIC_KEYS: number[][] = [
 
   useEffect(() => {
     getSeer().then((response) => {
-      console.log(response);
-  });
+      console.log("ddd",response);
+    });
+  //   getPosts(["0xe27fea7f062097c61e00d5e60a5f45873952ec89d5b99a4be5f7c424a39cbcc8"]).then((response) => {
+  //     console.log(response);
+  // });
 }, []);
+
 useEffect(() => {
   if (currentAccount) {
     getAccount(currentAccount.address).then((response) => {
