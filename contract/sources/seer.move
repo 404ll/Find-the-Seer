@@ -42,7 +42,7 @@ const EAlreadySettled: u64 = 15;
 const ENotEnoughDerivedKeys: u64 = 16;
 const ENoAccess: u64 = 17;
 const ENotSettled: u64 = 18;
-
+const EInvalidPost: u64 = 19;
 //======CONSTANTS=====
 const POST_STATUS_PENDING: u8 = 0;
 const POST_STATUS_SUCCESS: u8 = 1;
@@ -323,10 +323,10 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
+        assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
         if (post.total_votes_count == 0) {
             post.status = POST_STATUS_NO_VOTES;
         } else {
-            assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
             assert!(post.derived_vote_result.is_none(), EAlreadySettled);
             assert!(derived_keys.length() == key_servers.length(), EInvalidKeyServers);
 
@@ -353,7 +353,6 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
             let all_public_keys = crypto_vote_result
                 .key_servers
                 .zip_map!(crypto_vote_result.public_keys, |ks, pk| new_public_key(ks.to_id(), pk));
-
             let mut true_votes_count = 0;
             let mut false_votes_count = 0;
             let mut decrypted_votes = vector::empty<Option<vector<u8>>>();
@@ -572,7 +571,8 @@ public fun calculate_true_bp(post: &Post): u64 {
     true_bp
 }
 
-public fun seal_approve(post: &Post, clock: &Clock) {
+entry fun seal_approve(id: vector<u8>, post: &Post, clock: &Clock) {
+    assert!(id == object::id(post).to_bytes(), EInvalidPost);
     let end_time = post.created_at + post.lasting_time;
     assert!(clock.timestamp_ms() >= end_time, ENoAccess);
 }
@@ -587,7 +587,7 @@ fun verify_crypto_vote(
     assert!(encrypted_vote.services() == crypto_vote_result.key_servers, EInvalidEncryptedVote);
     assert!(encrypted_vote.threshold() == crypto_vote_result.threshold, EInvalidEncryptedVote);
     assert!(encrypted_vote.id() == post_id, EInvalidEncryptedVote);
-    assert!(encrypted_vote.package_id() == @seer, EInvalidEncryptedVote);
+    // assert!(encrypted_vote.package_id() == @seer, EInvalidEncryptedVote);
 }
 
 #[test_only]
