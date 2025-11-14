@@ -34,6 +34,7 @@ export const createAccount = async (name: string): Promise<Transaction> => {
 export const createPost = async (address: string, blobId: string, lastingTime: number, predictedTrueBp: number, keyServers: string[], publicKeys: number[][], threshold: number, accountId: string): Promise<Transaction> => {
     const tx = new Transaction();
     const createPostFee = FeeConfig.createPost;
+    console.log("publicKeys", publicKeys);
     tx.setSender(address);
     tx.moveCall({
         target: `${networkConfig.testnet.variables.Package}::seer::create_post`,
@@ -68,6 +69,7 @@ export const votePost = async (address: string,postId: string, accountId: string
     const tx = new Transaction();
     const votePostFee = FeeConfig.votePost;
     tx.setSender(address);
+    console.log("cryptoVoteData", cryptoVoteData);
     tx.moveCall({
         target: `${networkConfig.testnet.variables.Package}::seer::vote_post`,
         arguments: [tx.object(postId),

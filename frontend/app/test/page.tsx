@@ -13,37 +13,21 @@ import {
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { getPosts, getAccount, getSeer } from "@/contracts/query";
-import { useEffect } from "react";
+import { useEffect } from "react";  
 import { useVote } from "@/hooks/useVote";
+import { sealClient } from "@/utils/seal/encrypt";
 
 
 export default function TestPage() {
 
-  const KEY_SERVER_0 = '0x34401905bebdf8c04f3cd5f04f442a39372c8dc321c29edfb4f9cb30b23ab96';
-  const KEY_SERVER_1 = '0xd726ecf6f7036ee3557cd6c7b93a49b231070e8eecada9cfa157e40e3f02e5d3';
-  const KEY_SERVER_2 = '0xdba72804cc9504a82bbaa13ed4a83a0e2c6219d7e45125cf57fd10cbab957a97';
+  const KEY_SERVER_0 = '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75';
+  const KEY_SERVER_1 = '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8';
+  const KEY_SERVER_2 = '0x6068c0acb197dddbacd4746a9de7f025b2ed5a5b6c1b1ab44dade4426d141da2';
+
   const KEY_SERVERS = [KEY_SERVER_0, KEY_SERVER_1, KEY_SERVER_2];
-  function hexToBytes(hex: string): number[] {
-    // 移除可能的 '0x' 前缀
-    const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
-    const bytes: number[] = [];
-    for (let i = 0; i < cleanHex.length; i += 2) {
-      bytes.push(parseInt(cleanHex.substr(i, 2), 16));
-    }
-    return bytes;
-  }
-  let pk0 = 'a58bfa576a8efe2e2730bc664b3dbe70257d8e35106e4af7353d007dba092d722314a0aeb6bca5eed735466bbf471aef01e4da8d2efac13112c51d1411f6992b8604656ea2cf6a33ec10ce8468de20e1d7ecbfed8688a281d462f72a41602161';
-  let pk1 = 'a9ce55cfa7009c3116ea29341151f3c40809b816f4ad29baa4f95c1bb23085ef02a46cf1ae5bd570d99b0c6e9faf525306224609300b09e422ae2722a17d2a969777d53db7b52092e4d12014da84bffb1e845c2510e26b3c259ede9e42603cd6';
-  let pk2 = '93b3220f4f3a46fb33074b590cda666c0ebc75c7157d2e6492c62b4aebc452c29f581361a836d1abcbe1386268a5685103d12dec04aadccaebfa46d4c92e2f2c0381b52d6f2474490d02280a9e9d8c889a3fce2753055e06033f39af86676651';
-  const PUBLIC_KEYS: number[][] = [
-    hexToBytes(pk0),
-    hexToBytes(pk1),
-    hexToBytes(pk2),
-  ];
   const THRESHOLD = 2;
 
   const { vote, isEncrypting, error: voteError } = useVote();
-
 
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction, isPending } = useSignAndExecuteTransaction();
@@ -57,7 +41,7 @@ export default function TestPage() {
   const [blobId, setBlobId] = useState("");
   const [lastingTime, setLastingTime] = useState("86400"); // 1 day in seconds
   const [predictedTrueBp, setPredictedTrueBp] = useState("50");
-  const [keyServers, setKeyServers] = useState<string[]>([]);
+  const [keyServers, setKeyServers] = useState<string[]>(KEY_SERVERS);
   const [publicKeys, setPublicKeys] = useState<number[][]>([]);
   const [threshold, setThreshold] = useState("2");
   const [accountId, setAccountId] = useState("");
@@ -73,14 +57,38 @@ export default function TestPage() {
 
   
 
+  // 获取 public keys 的辅助函数
+  const fetchPublicKeys = async (keyServers: string[]): Promise<number[][]> => {
+    try {
+      // 1. 从 sealClient 获取 G2Element[]
+      const g2Elements = await sealClient.getPublicKeys(keyServers);
+      
+      // 2. 将 G2Element[] 转换为 number[][]
+      // 每个 G2Element 调用 toBytes() 得到 Uint8Array，然后转换为 number[]
+      const publicKeysArray: number[][] = g2Elements.map((g2Element) => {
+        const bytes = g2Element.toBytes();
+        return Array.from(bytes);
+      });
+      
+      console.log("Public keys:", publicKeysArray);
+      return publicKeysArray;
+    } catch (error) {
+      console.error("获取 public keys 失败:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
-    // getSeer().then((response) => {
-    //   console.log("ddd", response);
-    // });
-    //   getPosts(["0xe27fea7f062097c61e00d5e60a5f45873952ec89d5b99a4be5f7c424a39cbcc8"]).then((response) => {
-    //     console.log(response);
-    // });
-  }, []);
+    if (keyServers.length > 0) {
+      fetchPublicKeys(keyServers)
+        .then((keys) => {
+          setPublicKeys(keys);
+        })
+        .catch((error) => {
+          console.error("获取 public keys 失败:", error);
+        });
+    }
+  }, [keyServers]);
 
   useEffect(() => {
     if (currentAccount) {
@@ -142,7 +150,7 @@ export default function TestPage() {
         Number(lastingTime),
         Number(predictedTrueBp),
         KEY_SERVERS,
-        PUBLIC_KEYS,
+        publicKeys,
         THRESHOLD,
         // keyServers,
         // publicKeys,

@@ -9,10 +9,10 @@ const configs = {
         Package: process.env.DEVNET_PACKAGE_ID!,
     },
     testnet: {
-        Package: '0xd6e0bd682fa91af3d3ab0cf80c9080c580e25d8ef804a2e9f0745ef01cb54265',
-        Seer: '0xf2b81b93a168b2f09f96fad4ffa97653dc2327cada1064e7ae3f3db513202868',
-        Config: '0xe97db02457ea1ccdf46f0257c1a099033384d94195e76838bdd5c97763816e2d',
-        AdminCap: '0x8492052c364541361012ed7e4158a85e6be560c7641a1052bfca3344ee920dfa',
+        Package: '0x260c54d5968888aa1220d9fae4c56155d11ae10ec4b8b1f4d4b86036359e5116',
+        Seer: '0xdf10a4c967dad0cd7802ec0622a48dc6f88388f0ac66305b40a067bc7d04f034',
+        Config: '0x28f94fae16bc7b886ec65cdb9bc21b13775446fa61a55d85b7b9090b364260ad',
+        AdminCap: '0x01b9b11256513b85d81fa38b072de60d15f259341753f1ee2607e9edc265c682',
     },
     mainnet: {
         Package: process.env.MAINNET_PACKAGE_ID!,

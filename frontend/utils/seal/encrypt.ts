@@ -1,32 +1,36 @@
-import { SealClient, KeyServerConfig } from '@mysten/seal';
+import { SealClient, KeyServerConfig, DemType, EncryptedObject } from '@mysten/seal';
 import { networkConfig } from "@/contracts/index";
 import { suiClient } from '@/contracts/index';
+import { toHex,fromHex } from '@mysten/sui/utils';
 
 //从合约对象中取得
 function getTestnetKeyServers(): KeyServerConfig[] {
     return [
       {
-        objectId: '0x34401905bebdf8c04f3cd5f04f442a39372c8dc321c29edfb4f9cb30b23ab96',
+        objectId: '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75',
         weight: 1,
       },
       {
-        objectId: '0xd726ecf6f7036ee3557cd6c7b93a49b231070e8eecada9cfa157e40e3f02e5d3',
+        objectId: '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8',
         weight: 1,
       },
       {
-        objectId: '0xdba72804cc9504a82bbaa13ed4a83a0e2c6219d7e45125cf57fd10cbab957a97',
+        objectId: '0x6068c0acb197dddbacd4746a9de7f025b2ed5a5b6c1b1ab44dade4426d141da2',
         weight: 1,
       },
     ];
   }
 
+  
   const serverConfigs = getTestnetKeyServers();
 
-  const sealClient = new SealClient({
+  export const sealClient = new SealClient({
     suiClient,
     serverConfigs,
     verifyKeyServers: false,
   });
+
+
 
 /**
  * 为投票加密数据
@@ -46,24 +50,25 @@ export async function encryptVote(
 ): Promise<Uint8Array> {
   // 1. 准备投票消息（1字节）
   const message = new Uint8Array([voteChoice ? 0x01 : 0x00]);
+
+  const aad = fromHex(userAddress);
   
-  const aad = addressToBytes32(userAddress);
-  
-  // 3. 加密
   const { encryptedObject } = await sealClient.encrypt({
+    demType: DemType.Hmac256Ctr,
+    // kemType: KemType.x25519,
     threshold: threshold,
     packageId: packageId,
-    id: postId,
+    id: postId, 
     data: message,
-    aad: aad,
+    aad: aad, 
   });
   
+  const encryptedObjectBytes = EncryptedObject.parse(encryptedObject);
+  console.log("encryptedObjectBytes", encryptedObjectBytes);
   return encryptedObject;
 }
 
-/**
- * 批量为多个投票者加密（用于测试）
- */
+
 export async function encryptMultipleVotes(
   votes: Array<{
     choice: boolean;
@@ -112,9 +117,3 @@ export function bytesToHex(bytes: Uint8Array): string {
     .join('');
 }
 
-/**
- * 生成随机 nonce（如果需要）
- */
-export function generateNonce(length: number = 5): Uint8Array {
-  return crypto.getRandomValues(new Uint8Array(length));
-}
