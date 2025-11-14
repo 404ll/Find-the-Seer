@@ -1,45 +1,27 @@
 import { SessionKey, SealClient } from '@mysten/seal';
 import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
+import { fromHex } from '@mysten/sui/utils';
+import { networkConfig } from '@/contracts';
+import { SecureVersion } from 'tls';
 
-/**
- * 使用 SealClient 获取派生密钥（用于合约解密）
- */
+
 export async function fetchDerivedKeysForContract(
   postId: string,
-  packageId: string,
-  userAddress: string,
   suiClient: SuiClient,
   sealClient: SealClient,
-  signPersonalMessage: (args: { message: Uint8Array }) => Promise<{ signature: string }>
+  sessionKey: SessionKey,
 ): Promise<{
-  derivedKeys: Uint8Array[];        
+  derivedKeys: number[][];        
   keyServerAddresses: string[];   
 }> {
-  // 1. 使用 create 方法创建 SessionKey（异步）
-  const sessionKey = await SessionKey.create({
-    address: userAddress,
-    packageId: packageId,
-    ttlMin: 10,
-    suiClient: suiClient,
-  });
-
-  // 2. 获取需要签名的消息
-  const message = sessionKey.getPersonalMessage();
-  
-  // 3. 签名消息
-  const { signature } = await signPersonalMessage({ message });
-  
-  // 4. 设置签名到 SessionKey
-  await sessionKey.setPersonalMessageSignature(signature);
-
-  // 5. 构造访问控制交易
   const tx = new Transaction();
   tx.moveCall({
-    target: `${packageId}::seer::seal_approve`,
+    target: `${networkConfig.testnet.variables.Package}::seer::seal_approve`,
     arguments: [
-      tx.pure.vector("u8", Array.from(Buffer.from(postId.replace('0x', ''), 'hex'))),
+      tx.pure.vector("u8", fromHex(postId)),
       tx.object(postId),
+      tx.object.clock(),
     ],
   });
 
@@ -48,6 +30,8 @@ export async function fetchDerivedKeysForContract(
     onlyTransactionKind: true 
   });
 
+  console.log("txBytes", txBytes);
+
   const derivedKeys = await sealClient.getDerivedKeys({ 
     id: postId, 
     txBytes, 
@@ -55,12 +39,30 @@ export async function fetchDerivedKeysForContract(
     threshold: 2 
   });
 
+  console.log("derivedKeys", derivedKeys);
+
+  const keyServerAddresses = Array.from(derivedKeys.keys());
+  let count = 0;
+
   const derivedKeysArray: Uint8Array[] = Array.from(derivedKeys.values()).map(
-    (k: any) =>
-      k instanceof Uint8Array ? k : (k.key instanceof Uint8Array ? k.key : new Uint8Array(k))
+    (derivedKey: any) => {
+      if (derivedKey && derivedKey.key && typeof derivedKey.key.toBytes === 'function') {
+        return derivedKey.key.toBytes();
+      }
+      count++;
+      if (derivedKey instanceof Uint8Array) {
+        return derivedKey;
+      }
+      console.warn("无法解析 DerivedKey:", derivedKey);
+      return new Uint8Array(0);
+    }
   );
+  // 因为seal_approve的参数是id，所以需要将id的顺序反转，后来改
+  console.log("derivedKeysArray--------------------------------------------------------", derivedKeysArray);
+  const derivedKeysA: number[][] = derivedKeysArray.map((key: Uint8Array) => Array.from(key));
+  const derivedKeysB: number[][] = [derivedKeysA[1], derivedKeysA[0]];
   return {
-    derivedKeys: derivedKeysArray,
-    keyServerAddresses: Array.from(derivedKeys.keys())
+    derivedKeys: derivedKeysB,
+    keyServerAddresses: keyServerAddresses
   };
 }

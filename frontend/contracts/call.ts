@@ -6,8 +6,8 @@ import { Transaction, coinWithBalance } from "@mysten/sui/transactions";
 const FeeConfig = {
     createPost: 100000000,
     votePost: 100000000,
-} 
-  // public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
+}
+// public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
 export const createAccount = async (name: string): Promise<Transaction> => {
     const tx = new Transaction();
     tx.moveCall({
@@ -65,7 +65,7 @@ export const createPost = async (address: string, blobId: string, lastingTime: n
 //     ctx: &mut TxContext,
 // ) {
 
-export const votePost = async (address: string,postId: string, accountId: string, cryptoVoteData: number[]): Promise<Transaction> => {
+export const votePost = async (address: string, postId: string, accountId: string, cryptoVoteData: number[]): Promise<Transaction> => {
     const tx = new Transaction();
     const votePostFee = FeeConfig.votePost;
     tx.setSender(address);
@@ -78,7 +78,7 @@ export const votePost = async (address: string,postId: string, accountId: string
         tx.pure.vector("u8", cryptoVoteData),
         coinWithBalance({ balance: votePostFee, type: networkConfig.testnet.variables.SUI }),
         tx.object(networkConfig.testnet.variables.Config)
-    ],
+        ],
     });
     return tx;
 };
@@ -90,13 +90,22 @@ export const votePost = async (address: string,postId: string, accountId: string
 //     clock: &Clock,
 //     ctx: &mut TxContext,
 // ) {
-
 export const decryptAndSettleCryptoVote = async (address: string, postId: string, derivedKeys: number[][], keyServers: string[]): Promise<Transaction> => {
     const tx = new Transaction();
     tx.setSender(address);
+    // post: &mut Post,
+    // derived_keys: vector<vector<u8>>,
+    // key_servers: vector<address>,
+    // clock: &Clock,
+    console.log("derivedKeys-------------------------------------", derivedKeys);
+    console.log("keyServers-------------------------------------", keyServers);
     tx.moveCall({
         target: `${networkConfig.testnet.variables.Package}::seer::decrypt_and_settle_crypto_vote`,
-        arguments: [tx.object(postId), tx.pure.vector("vector<u8>", derivedKeys), tx.pure.vector("address", keyServers), tx.object.clock(), tx.object(networkConfig.testnet.variables.Config)],
+        arguments: [
+            tx.object(postId),
+            tx.pure.vector("vector<u8>", derivedKeys),
+            tx.pure.vector("address", keyServers),
+            tx.object.clock()],
     });
     return tx;
 };

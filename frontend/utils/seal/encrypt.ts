@@ -3,7 +3,7 @@ import { networkConfig } from "@/contracts/index";
 import { suiClient } from '@/contracts/index';
 import { toHex,fromHex } from '@mysten/sui/utils';
 
-//从合约对象中取得
+//后来由合约对象中取得
 function getTestnetKeyServers(): KeyServerConfig[] {
     return [
       {
@@ -48,12 +48,11 @@ export async function encryptVote(
   postId: string,
   threshold: number = 2
 ): Promise<Uint8Array> {
-  // 1. 准备投票消息（1字节）
   const message = new Uint8Array([voteChoice ? 0x01 : 0x00]);
 
   const aad = fromHex(userAddress);
   
-  const { encryptedObject } = await sealClient.encrypt({
+  const { encryptedObject: encryptedObjectBytes } = await sealClient.encrypt({
     demType: DemType.Hmac256Ctr,
     // kemType: KemType.x25519,
     threshold: threshold,
@@ -63,9 +62,9 @@ export async function encryptVote(
     aad: aad, 
   });
   
-  const encryptedObjectBytes = EncryptedObject.parse(encryptedObject);
-  console.log("encryptedObjectBytes", encryptedObjectBytes);
-  return encryptedObject;
+  const encryptedObject = EncryptedObject.parse(encryptedObjectBytes);
+  console.log("encryptedObject", encryptedObject);
+  return encryptedObjectBytes;
 }
 
 

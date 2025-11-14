@@ -6,16 +6,20 @@ import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import {
   createAccount,
   createPost,
-  votePost,
   decryptAndSettleCryptoVote,
   claimVoteRewards,
   claimVoteRewardsForAuthor,
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { getPosts, getAccount, getSeer } from "@/contracts/query";
-import { useEffect } from "react";  
+import { useEffect } from "react";
 import { useVote } from "@/hooks/useVote";
 import { sealClient } from "@/utils/seal/encrypt";
+import { fetchDerivedKeysForContract } from "@/utils/seal/decrypt";
+import { networkConfig } from "@/contracts";
+import { suiClient } from "@/contracts";
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { SessionKey } from '@mysten/seal';
 
 
 export default function TestPage() {
@@ -54,22 +58,52 @@ export default function TestPage() {
   // decryptAndSettleCryptoVote 参数
   const [derivedKeys, setDerivedKeys] = useState<number[][]>([]);
   const [settleKeyServers, setSettleKeyServers] = useState<string[]>([]);
-
+  const { mutate: signPersonalMessage } = useSignPersonalMessage();
   
+  const getDerivedKeys = async () => {
+    if (!currentAccount) return;
+  
+    // 1. 创建 SessionKey
+    const sessionKey = await SessionKey.create({
+      address: currentAccount.address,
+      packageId: networkConfig.testnet.variables.Package,
+      ttlMin: 10,
+      suiClient: suiClient,
+    });
 
-  // 获取 public keys 的辅助函数
+    signPersonalMessage(
+      {
+        message: sessionKey.getPersonalMessage(),
+      },
+      {
+        onSuccess: async (result: { signature: string }) => {
+          sessionKey.setPersonalMessageSignature(result.signature);
+          console.log("signature", result);
+          const {derivedKeys, keyServerAddresses} = await fetchDerivedKeysForContract(
+            "0x18449fe5d0fa8c406e05cc30537dcbe11249c8d3c5cb5bfd43e7b2bcd0b9deac",
+            suiClient,
+            sealClient,
+            sessionKey,
+          );
+          
+          setDerivedKeys(derivedKeys);
+          setSettleKeyServers(keyServerAddresses);
+        },
+        onError: (error) => {
+          setError(`签名失败: ${error.message}`);
+        },
+      }
+    );
+  }
+
   const fetchPublicKeys = async (keyServers: string[]): Promise<number[][]> => {
     try {
-      // 1. 从 sealClient 获取 G2Element[]
       const g2Elements = await sealClient.getPublicKeys(keyServers);
-      
-      // 2. 将 G2Element[] 转换为 number[][]
-      // 每个 G2Element 调用 toBytes() 得到 Uint8Array，然后转换为 number[]
       const publicKeysArray: number[][] = g2Elements.map((g2Element) => {
         const bytes = g2Element.toBytes();
         return Array.from(bytes);
       });
-      
+
       console.log("Public keys:", publicKeysArray);
       return publicKeysArray;
     } catch (error) {
@@ -90,6 +124,11 @@ export default function TestPage() {
     }
   }, [keyServers]);
 
+
+  useEffect(() => {
+      getDerivedKeys();
+  }, [currentAccount]);
+
   useEffect(() => {
     if (currentAccount) {
       getAccount(currentAccount.address).then((response) => {
@@ -97,6 +136,8 @@ export default function TestPage() {
       });
     }
   }, [currentAccount]);
+
+  
 
   const handleExecute = async (txPromise: Promise<any>) => {
     try {
@@ -168,7 +209,7 @@ export default function TestPage() {
       setError("请填写所有必填字段");
       return;
     }
-  
+
     try {
       const tx = await vote(
         postId,
@@ -176,14 +217,14 @@ export default function TestPage() {
         true,
         2
       );
-  
+
       // 执行交易
       handleExecute(Promise.resolve(tx));
     } catch (err: any) {
       setError(err.message);
     }
   };
-  
+
 
   const handleDecryptAndSettle = () => {
     if (!currentAccount) {
@@ -194,6 +235,7 @@ export default function TestPage() {
       setError("请输入 Post ID");
       return;
     }
+    // console.log("derivedKeys", derivedKeys);
     handleExecute(
       decryptAndSettleCryptoVote(
         currentAccount.address,
