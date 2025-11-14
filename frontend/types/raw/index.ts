@@ -97,4 +97,5 @@ export interface Seer {
     id: {id: string};
     accounts: string[];
     posts: Record<string, string[]>;
+    post_fees: number;
 }

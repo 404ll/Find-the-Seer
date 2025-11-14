@@ -3,18 +3,11 @@ import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { getSeer } from "@/contracts/query";
 
 export default function Home() {
   const currentAccount = useCurrentAccount();
   const router = useRouter();
 
-
-  useEffect(() => {
-      getSeer().then((response) => {
-        console.log(response);
-    });
-  }, []);
 
 
   useEffect(() => {
