@@ -3,7 +3,6 @@ import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { networkConfig } from "./index";
 import { Seer, Post, Account } from "../types/raw";
 import { PostBcs, AccountBcs, SeerBcs } from "../types/bcs";
-import { bcs } from '@mysten/sui/bcs';
 import { SuiGraphQLClient } from '@mysten/sui/graphql';
 import {getTableContent} from './graphl';
 
@@ -46,10 +45,11 @@ export const getSeer = async (): Promise<Seer> => {
   });
   console.log("response", response);
   const seer = SeerBcs.parse(response.object?.contents?.value as Uint8Array);
-  const posts = await getTableContentByGraphql(seer.posts.id.id);
-  console.log("posts", posts);
-  // const posts = await getPostsFromSeer(seer.posts.id.id);
+  console.log("seer-------------------------------", seer);
+  // const posts = await getTableContentByGraphql(seer.posts.id.id);
   // console.log("posts", posts);
+  const posts = await getPostsFromSeer(seer.posts.id.id);
+  console.log("posts", posts);
   console.log("seer", seer);
   return seer as unknown as Seer;
 };

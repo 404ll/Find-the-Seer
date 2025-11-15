@@ -93,26 +93,3 @@ export async function encryptMultipleVotes(
   return encryptedVotes;
 }
 
-/**
- * 将地址转换为32字节
- */
-export function addressToBytes32(address: string): Uint8Array {
-  // 移除 0x 前缀
-  let hex = address.replace('0x', '');
-  
-  hex = hex.padStart(64, '0');
-  
-  const bytes = new Uint8Array(32);
-  for (let i = 0; i < 32; i++) {
-    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
-  }
-  
-  return bytes;
-}
-
-export function bytesToHex(bytes: Uint8Array): string {
-  return '0x' + Array.from(bytes)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-

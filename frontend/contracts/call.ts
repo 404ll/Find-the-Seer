@@ -31,10 +31,9 @@ export const createAccount = async (name: string): Promise<Transaction> => {
 //     config: &Config,
 //     ctx: &mut TxContext,
 // ) {
-export const createPost = async (address: string, blobId: string, lastingTime: number, predictedTrueBp: number, keyServers: string[], publicKeys: number[][], threshold: number, accountId: string): Promise<Transaction> => {
+export const createPost = async (address: string, blobId: string, lastingTime: number, predictedTrueBp: number, accountId: string): Promise<Transaction> => {
     const tx = new Transaction();
     const createPostFee = FeeConfig.createPost;
-    console.log("publicKeys", publicKeys);
     tx.setSender(address);
     tx.moveCall({
         target: `${networkConfig.testnet.variables.Package}::seer::create_post`,
@@ -42,9 +41,6 @@ export const createPost = async (address: string, blobId: string, lastingTime: n
             tx.pure.string(blobId),
             tx.pure.u64(lastingTime),
             tx.pure.u64(predictedTrueBp),
-            tx.pure.vector("address", keyServers),
-            tx.pure.vector("vector<u8>", publicKeys),
-            tx.pure.u8(threshold),
             tx.object(accountId),
             tx.object(networkConfig.testnet.variables.Seer),
             coinWithBalance({ balance: createPostFee, type: networkConfig.testnet.variables.SUI }),
@@ -105,7 +101,9 @@ export const decryptAndSettleCryptoVote = async (address: string, postId: string
             tx.object(postId),
             tx.pure.vector("vector<u8>", derivedKeys),
             tx.pure.vector("address", keyServers),
-            tx.object.clock()],
+            tx.object.clock(),
+            tx.object(networkConfig.testnet.variables.Config)
+        ],
     });
     return tx;
 };

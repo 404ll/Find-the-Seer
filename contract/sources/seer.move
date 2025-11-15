@@ -73,6 +73,9 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         vote_value: u64,
         package_id: address,
         reward_benchmark: u64,
+        key_servers: vector<address>,
+        publickeys: vector<vector<u8>>,
+        threshold: u8,
         //帖子用户占奖池的比例
         // allocation_ratio: u64,
     }
@@ -186,6 +189,18 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         package_id: address,
     }
 
+    public struct SetKeyServersEvent has copy, drop {
+        key_servers: vector<address>,
+    }
+
+    public struct SetPublickeysEvent has copy, drop {
+        publickeys: vector<vector<u8>>,
+    }
+
+    public struct SetThresholdEvent has copy, drop {
+        threshold: u8,
+    }
+
 //=====Functions=====
     fun init(ctx: &mut TxContext) {
         transfer::transfer(AdminCap { id: object::new(ctx) }, ctx.sender());
@@ -193,6 +208,9 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
             id: object::new(ctx),
             create_post_fee: CREATE_POST_FEE,
             vote_value: VOTE_VALUE,
+            key_servers: vector::empty<address>(),
+            publickeys: vector::empty<vector<u8>>(),
+            threshold: 0,
             reward_benchmark: REWARD_BENCHMARK,
             package_id: @seer,
         });
@@ -227,9 +245,6 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         blob_id: String,
         lasting_time: u64,
         predicted_true_bp: u64,
-        key_servers: vector<address>,
-        publickeys: vector<vector<u8>>,
-        threshold: u8,
         account: &mut Account,
         seer: &mut Seer,
         coin: Coin<SUI>,
@@ -239,8 +254,8 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         ) {
         assert!(coin::value(&coin) == config.create_post_fee, EInvalidCoinValue);
         assert!(predicted_true_bp <= BP_DECIMAL, EInvalidBp);
-        assert!(key_servers.length() == publickeys.length(), EInvalidKeyServers);
-        assert!(threshold <= key_servers.length() as u8, EInvalidThreshold);
+        assert!(config.key_servers.length() == config.publickeys.length(), EInvalidKeyServers);
+        assert!(config.threshold <= config.key_servers.length() as u8, EInvalidThreshold);
 
         let id = object::new(ctx);
         let address = object::uid_to_address(&id);
@@ -253,9 +268,9 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         vector::push_back(&mut account.owned_posts, address);
         coin::put(&mut seer.post_fees, coin);
         let crypto_vote_result = CryptoVoteResult {
-            key_servers: key_servers,
-            public_keys: publickeys,
-            threshold: threshold,
+            key_servers: config.key_servers,
+            public_keys: config.publickeys,
+            threshold: config.threshold,
             encrypted_votes: vector::empty<EncryptedObject>(),
         };
         transfer::share_object(Post {
@@ -490,6 +505,34 @@ public fun set_package_id(_: &AdminCap, config: &mut Config, package_id: address
     });
 }
 
+public fun set_key_servers(_: &AdminCap, config: &mut Config, key_servers: vector<address>) {
+    config.key_servers = key_servers;
+    event::emit(SetKeyServersEvent {
+        key_servers: key_servers,
+    });
+}
+
+public fun set_publickeys(_: &AdminCap, config: &mut Config, publickeys: vector<vector<u8>>) {
+    config.publickeys = publickeys;
+    event::emit(SetPublickeysEvent {
+        publickeys: publickeys,
+    });
+}
+
+public fun set_threshold(_: &AdminCap, config: &mut Config, threshold: u8) {
+    config.threshold = threshold;
+    event::emit(SetThresholdEvent {
+        threshold: threshold,
+    });
+}
+
+public fun get_key_servers(config: &Config): vector<address> {
+    config.key_servers
+}
+
+public fun get_publickeys(config: &Config): vector<vector<u8>> {
+    config.publickeys
+}
 //getter
     public fun get_create_post_fee(config: &Config): u64 {
         config.create_post_fee

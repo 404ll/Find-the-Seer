@@ -37,33 +37,24 @@ export async function fetchDerivedKeysForContract(
     sessionKey, 
     threshold: 2 
   });
-
   console.log("derivedKeys", derivedKeys);
 
   const keyServerAddresses = Array.from(derivedKeys.keys());
 
   const derivedKeysArray: number[][] = keyServerAddresses.map((keyServerAddress) => {
     const derivedKey = derivedKeys.get(keyServerAddress);
-    
+    const derivedKeyString = derivedKey?.toString() ?? '';
     if (!derivedKey) {
       throw new Error(`找不到 key server ${keyServerAddress} 的派生密钥`);
     }
-    
-    const bfKey = (derivedKey as any).key;
-    
-    if (bfKey && typeof bfKey.toBytes === 'function') {
-      const bytes = bfKey.toBytes();
-      return Array.from(bytes);
-    }
-    
-    throw new Error(`无法解析 DerivedKey for ${keyServerAddress}`);
+    const derivedKeyBytes = fromHex(derivedKeyString);
+    return Array.from(derivedKeyBytes);
   });
-
   // 因为seal_approve的参数是id，所以需要将id的顺序反转，后来改
   console.log("derivedKeysArray--------------------------------------------------------", derivedKeysArray);
-  const derivedKeysA: number[][] = [derivedKeysArray[1], derivedKeysArray[0]];
+  // const derivedKeysA: number[][] = [derivedKeysArray[1], derivedKeysArray[0]];
   return {
-    derivedKeys: derivedKeysA,
+    derivedKeys: derivedKeysArray,
     keyServerAddresses: keyServerAddresses
   };
 }
