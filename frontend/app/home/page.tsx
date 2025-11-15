@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import PostList from '@/components/PostList';
-import { Post } from '@/types/display';
+import { Post, PostStatus } from '@/types/display';
 import PostDetail from '@/components/PostDetail';
 import Image from 'next/image';
 const posts: Post[] = [
@@ -12,7 +12,7 @@ const posts: Post[] = [
           lastingTime: 100,
           trueVotesCount: 45,
           falseVotesCount: 15,
-          status: "Active",
+          status: PostStatus.Active,
           votecount: 60,
           trueFalseRatio: 7,
       },
@@ -22,7 +22,7 @@ const posts: Post[] = [
           lastingTime: 100,
           trueVotesCount: 30,
           falseVotesCount: 20,
-          status: "Active",
+          status: PostStatus.Verify,
           votecount: 50,
           trueFalseRatio: 6,
       },
@@ -32,7 +32,7 @@ const posts: Post[] = [
           lastingTime: 100,
           trueVotesCount: 25,
           falseVotesCount: 35,
-          status: "Active",
+          status: PostStatus.Active,
           votecount: 60,
           trueFalseRatio: 5,
       },
@@ -42,7 +42,7 @@ const posts: Post[] = [
           lastingTime: 100,
           trueVotesCount: 50,
           falseVotesCount: 10,
-          status: "Active",
+          status: PostStatus.Active,
           votecount: 60,
           trueFalseRatio: 8,
       },
@@ -52,7 +52,7 @@ const posts: Post[] = [
           lastingTime: 0,
           trueVotesCount: 20,
           falseVotesCount: 30,
-          status: "Closed",
+          status: PostStatus.Closed,
           votecount: 50,
           trueFalseRatio: 4,
       },
@@ -62,7 +62,7 @@ const posts: Post[] = [
           lastingTime: 100,
           trueVotesCount: 40,
           falseVotesCount: 20,
-          status: "Active",
+          status: PostStatus.Verify,
           votecount: 60,
           trueFalseRatio: 6,
       },

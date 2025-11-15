@@ -4,7 +4,7 @@ export interface Post {
     lastingTime: number;
     trueVotesCount: number;
     falseVotesCount: number;
-    status: string;
+    status: PostStatus;
     votecount: number;
     trueFalseRatio: number;
     // authorClaimed: boolean;
