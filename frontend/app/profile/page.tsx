@@ -5,11 +5,15 @@ import OwnPostList from "@/components/OwnPostList";
 import ProfileCard from "@/components/ProfileCard";
 import NowPostModal from "@/components/NowPostModal";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ClosePostModal from "@/components/ClosePostModal";
 import CreatePostForm from "@/components/CreatePostForm";
 import Image from "next/image";
 import { Post } from "@/types/display";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useUser } from "@/context/UserContext";
+import { createAccountAndPost, createPost } from "@/contracts/call";
+import { useBetterSignAndExecuteTransactionAsync } from "@/hooks/useBetterTx";
 
 const mockData = {
     walletAddress: "0x1234567890123456789012345678901234567890",
@@ -133,9 +137,44 @@ const mockData = {
 
 
 export default function ProfilePage() {
+    const currentAccount = useCurrentAccount();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreatePostFormOpen, setIsCreatePostFormOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    const { account, isLoading, error, refreshAccount } = useUser();
+    
+    // 当 currentAccount 变化时，自动获取账户信息
+    useEffect(() => {
+        if (currentAccount) {
+            refreshAccount(currentAccount.address);
+        }
+    }, [currentAccount]);
+    
+    const {handleSignAndExecuteTransaction: createPostTx} = useBetterSignAndExecuteTransactionAsync({ tx: createPost});
+    const {handleSignAndExecuteTransaction: createAccountAndPostTx} = useBetterSignAndExecuteTransactionAsync({ tx: createAccountAndPost});
+
+    const handleCreatePost = (address: string, blobId: string, lastingTime: number, predictedTrueBp: number) => {
+        if (!currentAccount) {
+            console.error("Current account not found");
+            return;
+        }
+        if (!account) {
+            createAccountAndPostTx(currentAccount.address, blobId, lastingTime, predictedTrueBp).onSuccess(() => {
+                console.log("Account and post created successfully");
+                refreshAccount(currentAccount.address);
+            }).onError((error) => {
+                console.error(error);
+            }).execute();
+            return;
+        }
+        console.log("account.id", account.id.id);
+        createPostTx(address, blobId, lastingTime, predictedTrueBp, account.id.id).onSuccess(() => {
+            console.log("Post created successfully");
+            refreshAccount(currentAccount.address);
+        }).onError((error) => {
+            console.error(error);
+        }).execute();
+    };
 
     const handleOpenModal = (post: Post) => {
         setSelectedPost(post);
@@ -214,7 +253,7 @@ export default function ProfilePage() {
             )}
             {isCreatePostFormOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <CreatePostForm onClose={handleCloseCreatePostForm} />
+                    <CreatePostForm onClose={handleCloseCreatePostForm} onCreate={handleCreatePost} />
                 </div>
             )}
         </div>

@@ -30,3 +30,13 @@ export enum PostStatus {
     Closed = 'Closed', //已结束
     Verify = 'Verify', //等待验证
 }
+
+export interface User {
+    id: string;
+    name: string;
+    voteProfit: number;
+    authorProfit: number;
+    ownedPosts: Post[];
+    votedPosts: Post[];
+    claimedPosts: Post[];
+}

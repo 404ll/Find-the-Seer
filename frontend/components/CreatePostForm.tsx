@@ -7,8 +7,13 @@ import { useState } from "react";
 import MDEditor from "./MdEditor";
 import { WalrusFile } from "@mysten/walrus";
 import { uploadPostContent } from "@/utils/walrus/upload";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
-export default function CreatePostForm({ onClose }: { onClose: () => void }) {
+interface CreatePostFormProps {
+  onClose: () => void;
+  onCreate: (address: string, blobId: string, lastingTime: number, predictedTrueBp: number) => void;
+}
+export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProps) {
   const [epoch, setEpoch] = useState<number>(1);
   const [trueRatio, setTrueRatio] = useState<number>(7);
   const [content, setContent] = useState<string>("");
@@ -16,7 +21,7 @@ export default function CreatePostForm({ onClose }: { onClose: () => void }) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const falseRatio = 10 - trueRatio;
   const [blobId, setBlobId] = useState<string | null>(null);
-
+  const currentAccount = useCurrentAccount();
   const handleEpochChange = (delta: number) => {
     setEpoch(prev => Math.max(1, prev + delta));
   };
@@ -27,11 +32,15 @@ export default function CreatePostForm({ onClose }: { onClose: () => void }) {
   };
 
   const handleCreate = async () => {
+
     if (!content.trim()) {
       setUploadError("内容不能为空");
       return;
     }
-
+    if (!currentAccount) {
+      setUploadError("请先连接钱包");
+      return;
+    }
     // 使用代付，不需要检查钱包连接
     setIsUploading(true);
     setUploadError(null);
@@ -53,13 +62,19 @@ export default function CreatePostForm({ onClose }: { onClose: () => void }) {
         epochs: epoch,
       });
 
-      console.log("上传成功,blobId:", result.blobId);
+      // console.log("上传成功,blobId:", result.blobId);
       setBlobId(result.blobId);
       // 上传成功后关闭表单
-      onClose();
+      const lastingTime = epoch * 24 - 4;
+      console.log("trueRatio",trueRatio)
+      // trueRatio 是 1-9，表示 true:false 的比例，需要转换为万分比 (0-10000)
+      // 例如：trueRatio = 7 表示 7:3，true 的比例是 7/10 = 70% = 7000 BP
+      const trueBp = (trueRatio / 10) * 10000;
+      onCreate(currentAccount.address, result.blobId, lastingTime, trueBp);
+      // onClose();
     } catch (error) {
       console.error("上传失败:", error);
-      setUploadError(error instanceof Error ? error.message : "上传失败，请重试");
+      setUploadError(error instanceof Error ? error.message : "upload failed, please try again");
     } finally {
       setIsUploading(false);
     }
@@ -151,7 +166,7 @@ export default function CreatePostForm({ onClose }: { onClose: () => void }) {
             disabled={isUploading}
             className="bg-black text-white rounded-md px-6 py-2 font-cbyg text-2xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isUploading ? "上传中..." : "Create"}
+            {isUploading ? "uploading..." : "Create"}
           </button>
         </div>
       </Card>

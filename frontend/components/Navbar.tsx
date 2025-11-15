@@ -67,14 +67,7 @@ export default function Navbar() {
           className="absolute right-4 flex items-center"
           onClick={(e) => e.stopPropagation()}
         >
-          {currentAccount ? (
-            <button className="font-cbyg text-3xl px-4 py-2 rounded-t-[12px] text-black bg-[#D9D9D9] shadow-sm">
-              {`${currentAccount.address.slice(
-                0,
-                10
-              )}..${currentAccount.address.slice(-2)}`}
-            </button>
-          ) : (
+        
             <div className="relative group">
               <ConnectButton
                 connectText="Connect Wallet"
@@ -93,7 +86,7 @@ export default function Navbar() {
                 }}
               />
             </div>
-          )}
+          
         </div>
       </header>
         </div>

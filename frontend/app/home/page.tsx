@@ -1,10 +1,12 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import PostList from '@/components/PostList';
 import { Post, PostStatus } from '@/types/display';
 import PostDetail from '@/components/PostDetail';
 import Image from 'next/image';
+import { useUser } from '@/context/UserContext';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 const posts: Post[] = [
       {
           content: "# The World is Ending\n\nIn **100 seconds** from now, the world as we know it will come to an end.\n\n## What to expect:\n- Complete chaos\n- Final moments\n- The end of everything\n\n> This is a prophecy that cannot be ignored.",
@@ -72,6 +74,14 @@ const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
+  const { account, isLoading, error, refreshAccount } = useUser();
+  const currentAccount = useCurrentAccount();
+  console.log(account);
+  useEffect(() => {
+    if (currentAccount) {
+      refreshAccount(currentAccount.address);
+    }
+  }, [currentAccount]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   // 计算总页数
   const totalPages = Math.ceil(posts.length / ITEMS_PER_PAGE);
