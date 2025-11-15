@@ -71,6 +71,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         id: UID,
         create_post_fee: u64,
         vote_value: u64,
+        package_id: address,
         reward_benchmark: u64,
         //帖子用户占奖池的比例
         // allocation_ratio: u64,
@@ -183,6 +184,10 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         create_post_fee: u64,
     }
 
+    public struct SetPackageIdEvent has copy, drop {
+        package_id: address,
+    }
+
 //=====Functions=====
     fun init(ctx: &mut TxContext) {
         transfer::transfer(AdminCap { id: object::new(ctx) }, ctx.sender());
@@ -191,6 +196,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
             create_post_fee: CREATE_POST_FEE,
             vote_value: VOTE_VALUE,
             reward_benchmark: REWARD_BENCHMARK,
+            package_id: @seer,
         });
         transfer::share_object(Seer {
             id: object::new(ctx),
@@ -321,6 +327,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         derived_keys: vector<vector<u8>>,
         key_servers: vector<address>,
         clock: &Clock,
+        config: &Config,
         ctx: &mut TxContext,
     ) {
         assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
@@ -334,7 +341,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
             assert!(derived_keys.length() as u8 >= crypto_vote_result.threshold, ENotEnoughDerivedKeys);
             let verified_derived_keys = verify_derived_keys(
                 &derived_keys.map_ref!(|k| g1_from_bytes(k)),
-                @seer,
+                config.package_id,
                 object::id(post).to_bytes(),
                 &key_servers
                     .map_ref!(
@@ -477,6 +484,13 @@ public fun update_create_post_fee(_: &AdminCap, config: &mut Config, create_post
     config.create_post_fee = create_post_fee;
     event::emit(UpdateCreatePostFeeEvent {
         create_post_fee: create_post_fee,
+    });
+}
+
+public fun set_package_id(_: &AdminCap, config: &mut Config, package_id: address) {
+    config.package_id = package_id;
+    event::emit(SetPackageIdEvent {
+        package_id: package_id,
     });
 }
 
