@@ -121,7 +121,6 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
 
     public struct Account has key {
         id: UID,
-        name: String,
         vote_profit: u64,
         author_profit: u64,
         owned_posts: vector<address>,
@@ -134,8 +133,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
 //=====Events=====
     public struct CreateAccountEvent has copy, drop {
         user: address,
-        account_address: address,
-        name: String,
+        account_address: address
     }
 
     public struct CreatePostEvent has copy, drop {
@@ -206,12 +204,11 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         });
     }
 
-    public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
+    public fun create_account(seer: &mut Seer, ctx: &mut TxContext) {
         let id = object::new(ctx);
         let address = object::uid_to_address(&id);
         let account = Account {
             id: id,
-            name: name,
             vote_profit: 0,
             author_profit: 0,
             owned_posts: vector::empty<address>(),
@@ -223,7 +220,6 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         event::emit(CreateAccountEvent {
             user: ctx.sender(),
             account_address: address,
-            name: name,
         });
     }
 
