@@ -71,11 +71,19 @@ export interface Post {
     author_claimed: boolean;
 }
 
+export interface EncryptedObject {
+    package_id: string;
+    id: string[];
+    indices: string[];
+    services: string[];
+    threshold: number;
+}
+
 export interface CryptoVoteResult {
     key_servers: string[];
     public_keys: string[][];
     threshold: number;
-    encrypted_votes: string[];
+    encrypted_votes: EncryptedObject[];
 }
 
 export interface DerivedVoteResult {

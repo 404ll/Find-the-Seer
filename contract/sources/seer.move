@@ -222,7 +222,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         });
     }
 
-    public fun create_account(seer: &mut Seer, ctx: &mut TxContext) {
+    public fun create_account(seer: &mut Seer, ctx: &mut TxContext):Account {
         let id = object::new(ctx);
         let address = object::uid_to_address(&id);
         let account = Account {
@@ -234,11 +234,12 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
             claimed_posts: vector::empty<address>(),
         };
         vector::push_back(&mut seer.accounts, address);
-        transfer::transfer(account, ctx.sender()); // 改为 owned object
+        // transfer::transfer(account, ctx.sender()); // 改为 owned object
         event::emit(CreateAccountEvent {
             user: ctx.sender(),
             account_address: address,
         });
+        account
     }
 
     public fun create_post(

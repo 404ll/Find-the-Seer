@@ -58,8 +58,8 @@ const getPostsFromSeer = async (parentId: string): Promise<Record<string, string
   const { response } = await grpcClient.stateService.listDynamicFields({
     parent: parentId,
   });
-  const posts = response.dynamicFields.map((field) => {
-  const post = grpcClient.ledgerService.getObject({
+  const dynamicFields = await Promise.all(response.dynamicFields.map(async (field) => {
+   const {response: dynamicField} = await grpcClient.ledgerService.getObject({
     objectId: field.fieldId,
     readMask: {
       paths: [
@@ -68,12 +68,10 @@ const getPostsFromSeer = async (parentId: string): Promise<Record<string, string
       ],
     },
   });
-  console.log("post", post);
-    return post;
-  });
-  console.log("posts", posts);
-  console.log("response", response);
-  return posts as unknown as Record<string, string[]>;
+  // console.log("post--------------------", post);
+  return dynamicField;
+  }));
+  return dynamicFields as unknown as Record<string, string[]>;
 };
 
 export const getPosts = async (postIds: string[]): Promise<Post[]> => {
@@ -85,21 +83,21 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
     readMask: {
       paths: [
         "contents",
+        "json",
       ],
     },
   });
+console.log("response--------------------", response);
 
-  console.log("response", response);
   const posts = response.objects
     .map((object) => {
       if (object.result.oneofKind === 'object') {
-        return PostBcs.parse(object.result.object?.contents?.value as Uint8Array) as unknown as Post;
+        return PostBcs.parse(object.result.object?.contents?.value as Uint8Array);
       }
       return null;
     })
-    .filter((post): post is Post => post !== null);
-
-  return posts;
+    console.log("posts--------------------", posts);
+  return posts as unknown as Post[];
 };
 
 export const getAccount = async (accountId: string): Promise<Account> => {
@@ -112,6 +110,7 @@ export const getAccount = async (accountId: string): Promise<Account> => {
       ],
     },
   });
+  console.log("response", response.objects[0]?.contents?.value);
   const account = AccountBcs.parse(response.objects[0]?.contents?.value as Uint8Array);
   return account as unknown as Account;
 };

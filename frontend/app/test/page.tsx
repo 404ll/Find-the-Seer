@@ -80,7 +80,7 @@ export default function TestPage() {
           sessionKey.setPersonalMessageSignature(result.signature);
           console.log("signature", result);
           const {derivedKeys, keyServerAddresses} = await fetchDerivedKeysForContract(
-            "0xd347ea5d2da53f009b0ae3e5c0c1d231501eb86e80e0aba9be894c4d52c1f618",
+            "0x6daa65d9d8ca4a964b5c38080423bdd7450788f05ec9cabfed374fd5206c24b8",
             suiClient,
             sealClient,
             sessionKey,
@@ -140,6 +140,10 @@ export default function TestPage() {
 useEffect (() => {
   getSeer()
 }, []);
+
+useEffect(() => {
+  getPosts(["0x6daa65d9d8ca4a964b5c38080423bdd7450788f05ec9cabfed374fd5206c24b8"])
+}, [postId]);
 
   const handleExecute = async (txPromise: Promise<any>) => {
     try {
