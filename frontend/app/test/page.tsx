@@ -54,7 +54,6 @@ export default function TestPage() {
   // votePost 参数
   const [postId, setPostId] = useState("");
   const [cryptoVoteData, setCryptoVoteData] = useState<number[]>([]);
-  const [coin, setCoin] = useState("");
 
   // decryptAndSettleCryptoVote 参数
   const [derivedKeys, setDerivedKeys] = useState<number[][]>([]);
@@ -359,7 +358,7 @@ const handleSetPublicKeys = async () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-2">持续时间 (秒):</label>
+                  <label className="block mb-2">持续时间 (毫秒):</label>
                   <input
                     type="number"
                     value={lastingTime}
@@ -425,16 +424,6 @@ const handleSetPublicKeys = async () => {
                   onChange={(e) => setAccountId(e.target.value)}
                   className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
                   placeholder="输入 Account ID"
-                />
-              </div>
-              <div>
-                <label className="block mb-2">Coin Object ID:</label>
-                <input
-                  type="text"
-                  value={coin}
-                  onChange={(e) => setCoin(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
-                  placeholder="输入 Coin Object ID"
                 />
               </div>
               <button
