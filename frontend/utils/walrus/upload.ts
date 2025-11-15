@@ -116,6 +116,7 @@ export async function uploadPostContent(
   const sponsorSigner = getSponsorKeypair();
 
   try {
+    //你用的http
     const results = await client.walrus.writeFiles({
       files: [file],
       epochs,

@@ -51,6 +51,39 @@ export const createPost = async (address: string, blobId: string, lastingTime: n
     return tx;
 };
 
+export const createAccountAndPost = async (
+    address: string,
+    blobId: string,
+    lastingTime: number,
+    predictedTrueBp: number,
+): Promise<Transaction> => {
+    const tx = new Transaction();
+    const createPostFee = FeeConfig.createPost;
+    tx.setSender(address);
+
+    // 1. 先创建 account
+    const [account] = tx.moveCall({
+        target: `${networkConfig.testnet.variables.Package}::seer::create_account`,
+        arguments: [tx.object(networkConfig.testnet.variables.Seer)],
+    });
+
+    // 2. 再创建 post，使用上一步的 account 结果
+    tx.moveCall({
+        target: `${networkConfig.testnet.variables.Package}::seer::create_post`,
+        arguments: [
+            tx.pure.string(blobId),
+            tx.pure.u64(lastingTime),
+            tx.pure.u64(predictedTrueBp),
+            tx.object(account),
+            tx.object(networkConfig.testnet.variables.Seer),
+            coinWithBalance({ balance: createPostFee, type: networkConfig.testnet.variables.SUI }),
+            tx.object.clock(),
+            tx.object(networkConfig.testnet.variables.Config)
+        ],
+    });
+
+    return tx;
+};
 // public fun vote_post(
 //     post: &mut Post,
 //     account: &mut Account,
@@ -150,3 +183,6 @@ export const setPublicKeys1 = async (publicKeys: number[][]): Promise<Transactio
     });
     return tx;
 };
+
+
+
