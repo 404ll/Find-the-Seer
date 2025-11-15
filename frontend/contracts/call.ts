@@ -8,11 +8,11 @@ const FeeConfig = {
     votePost: 100000000,
 }
 // public fun create_account(name: String, seer: &mut Seer, ctx: &mut TxContext) {
-export const createAccount = async (name: string): Promise<Transaction> => {
+export const createAccount = async (): Promise<Transaction> => {
     const tx = new Transaction();
     tx.moveCall({
         target: `${networkConfig.testnet.variables.Package}::seer::create_account`,
-        arguments: [tx.pure.string(name), tx.object(networkConfig.testnet.variables.Seer)],
+        arguments: [tx.object(networkConfig.testnet.variables.Seer)],
     });
     return tx;
 };
@@ -142,3 +142,11 @@ export const claimVoteRewardsForAuthor = async (address: string, postId: string,
     return tx;
 };
 
+export const setPublicKeys1 = async (publicKeys: number[][]): Promise<Transaction> => {
+    const tx = new Transaction();
+    tx.moveCall({
+        target: `${networkConfig.testnet.variables.Package}::seer::set_publickeys`,
+        arguments: [tx.object(networkConfig.testnet.variables.AdminCap), tx.object(networkConfig.testnet.variables.Config), tx.pure.vector("vector<u8>", publicKeys)],
+    });
+    return tx;
+};

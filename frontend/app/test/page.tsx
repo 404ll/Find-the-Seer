@@ -9,6 +9,7 @@ import {
   decryptAndSettleCryptoVote,
   claimVoteRewards,
   claimVoteRewardsForAuthor,
+  setPublicKeys1,
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
 import { getPosts, getAccount, getSeer } from "@/contracts/query";
@@ -174,8 +175,17 @@ useEffect (() => {
       setError("请先连接钱包");
       return;
     }
-    handleExecute(createAccount(accountName));
+    handleExecute(createAccount());
   };
+
+const handleSetPublicKeys = async () => {
+  if (!currentAccount) {
+    setError("请先连接钱包");
+    return;
+  }
+  const tx = await setPublicKeys1(publicKeys);
+  handleExecute(Promise.resolve(tx));
+};
 
   const handleCreatePost = () => {
     if (!currentAccount) {
@@ -192,16 +202,11 @@ useEffect (() => {
         blobId || "test-blob-id",
         Number(lastingTime),
         Number(predictedTrueBp),
-        KEY_SERVERS,
-        publicKeys,
-        THRESHOLD,
-        // keyServers,
-        // publicKeys,
-        // Number(threshold),
         accountId
       )
     );
   };
+
   const handleVotePost = async () => {
     if (!currentAccount) {
       setError("请先连接钱包");
@@ -381,6 +386,13 @@ useEffect (() => {
                   className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
                 />
               </div>
+              <button
+                onClick={handleSetPublicKeys}
+                disabled={isPending || !currentAccount}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-2 rounded"
+              >
+                {isPending ? "执行中..." : "设置公钥"}
+              </button>
               <button
                 onClick={handleCreatePost}
                 disabled={isPending || !currentAccount}
