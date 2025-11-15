@@ -104,6 +104,6 @@ export interface DerivedVoteResult {
 export interface Seer {
     id: {id: string};
     accounts: string[];
-    posts: Record<string, string[]>;
+    posts_table_id: string;
     post_fees: number;
 }

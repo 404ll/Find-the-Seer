@@ -12,7 +12,7 @@ import {
   setPublicKeys1,
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { getPosts, getAccount, getSeer } from "@/contracts/query";
+import { getPosts, getAccount, getSeer, getTableContentByGraphql } from "@/contracts/query";
 import { useEffect } from "react";
 import { useVote } from "@/hooks/useVote";
 import { sealClient } from "@/utils/seal/encrypt";

@@ -47,3 +47,6 @@ export {
 
 // 默认导出全局初始化函数
 export { default as initializeDecoders } from './registerDecoders'
+
+// 导出数据转换函数
+export { accountToUser, rawPostToDisplayPost } from './dataTransformers'

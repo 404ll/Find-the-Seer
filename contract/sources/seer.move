@@ -122,7 +122,7 @@ const REWARD_BENCHMARK: u64 = 2000; //20%
         false_votes_count: u64,
     }
 
-    public struct Account has key {
+    public struct Account has key, store {
         id: UID,
         vote_profit: u64,
         author_profit: u64,

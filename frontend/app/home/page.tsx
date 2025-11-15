@@ -74,12 +74,12 @@ const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const { account, isLoading, error, refreshAccount } = useUser();
+  const { user, isLoading, error, refreshUser } = useUser();
   const currentAccount = useCurrentAccount();
-  console.log(account);
+  console.log(user);
   useEffect(() => {
     if (currentAccount) {
-      refreshAccount(currentAccount.address);
+      refreshUser(currentAccount.address);
     }
   }, [currentAccount]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);

@@ -82,6 +82,8 @@ export const createAccountAndPost = async (
         ],
     });
 
+    tx.transferObjects([account], address);
+
     return tx;
 };
 // public fun vote_post(

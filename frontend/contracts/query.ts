@@ -8,7 +8,7 @@ import {getTableContent} from './graphl';
 
 
 const graphqlClient = new SuiGraphQLClient({
-  url: `https://sui-mainnet.mystenlabs.com/graphql`,
+  url: ` https://graphql.testnet.sui.io/graphql`,
 });
 
 const grpcClient = new SuiGrpcClient({
@@ -22,11 +22,11 @@ const grpcClient = new SuiGrpcClient({
 //   posts: Record<string, string[]>;
 //   post_fees: number;
 // }
-export const getTableContentByGraphql = async (tableId: string): Promise<Record<string, string[]>> => {
+export const getTableContentByGraphql = async (address: string): Promise<Record<string, string[]>> => {
   const response = await graphqlClient.query({
     query: getTableContent,
     variables: {
-      tableId: tableId,
+      address: address,
     },
   });
 
@@ -43,14 +43,10 @@ export const getSeer = async (): Promise<Seer> => {
       ],
     },
   });
-  console.log("response", response);
   const seer = SeerBcs.parse(response.object?.contents?.value as Uint8Array);
-  console.log("seer-------------------------------", seer);
-  // const posts = await getTableContentByGraphql(seer.posts.id.id);
-  // console.log("posts", posts);
-  const posts = await getPostsFromSeer(seer.posts.id.id);
-  console.log("posts", posts);
-  console.log("seer", seer);
+  console.log("seer-id", seer.posts.id.id);
+  const posts = await getTableContentByGraphql("0xcb3f9b7003f06c5f1a38649ef827c1eba64f22fc965e127781abf72a212d5a82");
+  console.log("posts-graphql", posts);
   return seer as unknown as Seer;
 };
 
@@ -87,7 +83,6 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
       ],
     },
   });
-console.log("response--------------------", response);
 
   const posts = response.objects
     .map((object) => {
@@ -96,7 +91,6 @@ console.log("response--------------------", response);
       }
       return null;
     })
-    console.log("posts--------------------", posts);
   return posts as unknown as Post[];
 };
 
@@ -110,8 +104,6 @@ export const getAccount = async (accountId: string): Promise<Account> => {
       ],
     },
   });
-  console.log("response", response.objects[0]?.contents?.value);
   const account = AccountBcs.parse(response.objects[0]?.contents?.value as Uint8Array);
   return account as unknown as Account;
 };
-

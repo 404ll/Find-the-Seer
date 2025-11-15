@@ -1,33 +1,41 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { Account } from "../types/raw";
 import { getAccount } from "../contracts/query";
+import { User } from "@/types/display";
+import { accountToUser } from "@/utils/dataTransformers";
 
 interface UserContextType {
-  account: Account | null;
+  user: User | null;
   isLoading: boolean;
   error: string | null;
-  refreshAccount: (address: string) => Promise<void>;
+  refreshUser: (address: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [account, setAccount] = useState<Account | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshAccount = async (address: string) => {
+  const refreshUser = async (address: string) => {
     setIsLoading(true);
     setError(null);
     try {
       const account = await getAccount(address);
-      console.log(account);
-      setAccount(account);
+      if (!account) {
+        // 用户还没有创建账户
+        setUser(null);
+        return;
+      }
+      console.log("account", account);
+      const user = await accountToUser(account);
+      console.log("user", user);
+      setUser(user);
     } catch (error) {
       console.log(error);
-      setError(error as string);
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
       setIsLoading(false);
     }
@@ -36,7 +44,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   
 
 
-  const value = useMemo(() => ({ account, isLoading, error, refreshAccount }), [account, isLoading, error]);
+  const value = useMemo(() => ({ user, isLoading, error, refreshUser }), [user, isLoading, error]);
 
   return (
     <UserContext.Provider value={value}>

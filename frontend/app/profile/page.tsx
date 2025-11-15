@@ -141,12 +141,12 @@ export default function ProfilePage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreatePostFormOpen, setIsCreatePostFormOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-    const { account, isLoading, error, refreshAccount } = useUser();
+    const { user, isLoading, error, refreshUser } = useUser();
     
     // 当 currentAccount 变化时，自动获取账户信息
     useEffect(() => {
         if (currentAccount) {
-            refreshAccount(currentAccount.address);
+            refreshUser(currentAccount.address);
         }
     }, [currentAccount]);
     
@@ -158,19 +158,19 @@ export default function ProfilePage() {
             console.error("Current account not found");
             return;
         }
-        if (!account) {
+        if (!user) {
             createAccountAndPostTx(currentAccount.address, blobId, lastingTime, predictedTrueBp).onSuccess(() => {
                 console.log("Account and post created successfully");
-                refreshAccount(currentAccount.address);
+                refreshUser(currentAccount.address);
             }).onError((error) => {
                 console.error(error);
             }).execute();
             return;
         }
-        console.log("account.id", account.id.id);
-        createPostTx(address, blobId, lastingTime, predictedTrueBp, account.id.id).onSuccess(() => {
+        console.log("user.id", user.id);
+        createPostTx(address, blobId, lastingTime, predictedTrueBp, user.id).onSuccess(() => {
             console.log("Post created successfully");
-            refreshAccount(currentAccount.address);
+            refreshUser(currentAccount.address);
         }).onError((error) => {
             console.error(error);
         }).execute();
