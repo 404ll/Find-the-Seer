@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import {
-  createAccount,
+  createAccountAndPost,
   createPost,
+  createAccountAndVotePost,
   decryptAndSettleCryptoVote,
   claimVoteRewards,
   claimVoteRewardsForAuthor,
@@ -79,7 +80,7 @@ export default function TestPage() {
           sessionKey.setPersonalMessageSignature(result.signature);
           console.log("signature", result);
           const {derivedKeys, keyServerAddresses} = await fetchDerivedKeysForContract(
-            "0x6daa65d9d8ca4a964b5c38080423bdd7450788f05ec9cabfed374fd5206c24b8",
+            "0x21ed41cc0a44fe77713ecf398ceed2dcb4e54bec94353884f68598b11f35464e",
             suiClient,
             sealClient,
             sessionKey,
@@ -127,7 +128,7 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  getPosts(["0x6daa65d9d8ca4a964b5c38080423bdd7450788f05ec9cabfed374fd5206c24b8"])
+  getPosts(["0x21ed41cc0a44fe77713ecf398ceed2dcb4e54bec94353884f68598b11f35464e"])
 }, [postId]);
 
   const handleExecute = async (txPromise: Promise<any>) => {
@@ -163,7 +164,7 @@ useEffect(() => {
       setError("请先连接钱包");
       return;
     }
-    handleExecute(createAccount());
+    handleExecute(createPost(currentAccount.address, blobId || "test-blob-id", Number(lastingTime), Number(predictedTrueBp),accountId));
   };
 
 const handleSetPublicKeys = async () => {
@@ -180,17 +181,12 @@ const handleSetPublicKeys = async () => {
       setError("请先连接钱包");
       return;
     }
-    if (!accountId) {
-      setError("请输入 Account ID");
-      return;
-    }
     handleExecute(
-      createPost(
+      createAccountAndPost(
         currentAccount.address,
         blobId || "test-blob-id",
         Number(lastingTime),
-        Number(predictedTrueBp),
-        accountId
+        Number(predictedTrueBp)
       )
     );
   };
@@ -220,6 +216,18 @@ const handleSetPublicKeys = async () => {
     }
   };
 
+
+  const handleCreateAccountAndVotePost = async () => {
+    if (!currentAccount) {
+      setError("请先连接钱包");
+      return;
+    }
+    if (!postId) {
+      setError("请输入 Post ID 和 Account ID");
+      return;
+    }
+    handleExecute(createAccountAndVotePost(currentAccount.address, postId, cryptoVoteData));
+  };
 
   const handleDecryptAndSettle = () => {
     if (!currentAccount) {
@@ -259,7 +267,7 @@ const handleSetPublicKeys = async () => {
       return;
     }
     if (!postId || !accountId) {
-      setError("请输入 Post ID 和 Account ID");
+      setError("请输入 Post ID");
       return;
     }
     handleExecute(
@@ -297,33 +305,11 @@ const handleSetPublicKeys = async () => {
         )}
 
         <div className="space-y-8">
-          {/* createAccount */}
-          <section className="bg-gray-900 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-2xl font-semibold mb-4">1. createAccount</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block mb-2">账户名称:</label>
-                <input
-                  type="text"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
-                  placeholder="输入账户名称"
-                />
-              </div>
-              <button
-                onClick={handleCreateAccount}
-                disabled={isPending || !currentAccount}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-2 rounded"
-              >
-                {isPending ? "执行中..." : "创建账户"}
-              </button>
-            </div>
-          </section>
 
-          {/* createPost */}
+
+          {/* createAccountAndPost */}
           <section className="bg-gray-900 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-2xl font-semibold mb-4">2. createPost</h2>
+            <h2 className="text-2xl font-semibold mb-4">2. createAccountAndPost</h2>
             <div className="space-y-4">
               <div>
                 <label className="block mb-2">Blob ID:</label>
@@ -335,16 +321,8 @@ const handleSetPublicKeys = async () => {
                   placeholder="输入 Blob ID"
                 />
               </div>
-              <div>
-                <label className="block mb-2">Account ID:</label>
-                <input
-                  type="text"
-                  value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
-                  placeholder="输入 Account ID"
-                />
               </div>
+              <div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block mb-2">持续时间 (毫秒):</label>
@@ -391,6 +369,78 @@ const handleSetPublicKeys = async () => {
             </div>
           </section>
 
+          {/* createPost */}
+          <section className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+            <h2 className="text-2xl font-semibold mb-4">2. createAccountAndPost</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-2">Blob ID:</label>
+                <input
+                  type="text"
+                  value={blobId}
+                  onChange={(e) => setBlobId(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
+                  placeholder="输入 Blob ID"
+                />
+              </div>
+              </div>
+              <div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2">持续时间 (毫秒):</label>
+                  <input
+                    type="number"
+                    value={lastingTime}
+                    onChange={(e) => setLastingTime(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2">预测真实 BP:</label>
+                  <input
+                    type="number"
+                    value={predictedTrueBp}
+                    onChange={(e) => setPredictedTrueBp(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block mb-2">阈值:</label>
+                <input
+                  type="number"
+                  value={threshold}
+                  onChange={(e) => setThreshold(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
+                />
+              </div>
+              <button
+                onClick={handleSetPublicKeys}
+                disabled={isPending || !currentAccount}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-2 rounded"
+              >
+                {isPending ? "执行中..." : "设置公钥"}
+              </button>
+              <div>
+                <label className="block mb-2">Account ID:</label>
+                <input
+                  type="text"
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
+                  placeholder="输入 Account ID"
+                />
+              </div>
+              <button
+                onClick={handleCreatePost}
+                disabled={isPending || !currentAccount}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-2 rounded"
+              >
+                {isPending ? "执行中..." : "创建帖子"}
+              </button>
+            </div>
+          </section>
+
           {/* votePost */}
           <section className="bg-gray-900 rounded-lg p-6 border border-gray-700">
             <h2 className="text-2xl font-semibold mb-4">3. votePost</h2>
@@ -421,6 +471,30 @@ const handleSetPublicKeys = async () => {
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-2 rounded"
               >
                 {isPending ? "执行中..." : "投票"}
+              </button>
+            </div>
+          </section>
+
+          {/* createAccountAndVotePost */}
+          <section className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+            <h2 className="text-2xl font-semibold mb-4">4. createAccountAndVotePost</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-2">Post ID:</label>
+                <input
+                  type="text"
+                  value={postId}
+                  onChange={(e) => setPostId(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 text-white"
+                  placeholder="输入 Post ID"
+                />
+              </div>
+              <button
+                onClick={handleCreateAccountAndVotePost}
+                disabled={isPending || !currentAccount}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-2 rounded"
+              >
+                {isPending ? "执行中..." : "创建账户并投票"}
               </button>
             </div>
           </section>

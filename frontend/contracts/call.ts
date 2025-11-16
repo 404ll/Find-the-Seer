@@ -114,6 +114,21 @@ export const votePost = async (address: string, postId: string, accountId: strin
     return tx;
 };
 
+export const createAccountAndVotePost = async (address: string, postId: string, cryptoVoteData: number[]): Promise<Transaction> => {
+    const tx = new Transaction();
+    tx.setSender(address);
+    const [account] = tx.moveCall({
+        target: `${networkConfig.testnet.variables.Package}::seer::create_account`,
+        arguments: [tx.object(networkConfig.testnet.variables.Seer)],
+    });
+    tx.moveCall({
+        target: `${networkConfig.testnet.variables.Package}::seer::vote_post`,
+        arguments: [tx.object(postId), tx.object(account), tx.object.clock(), tx.pure.vector("u8", cryptoVoteData), coinWithBalance({ balance: FeeConfig.votePost, type: networkConfig.testnet.variables.SUI }), tx.object(networkConfig.testnet.variables.Config)],
+    });
+    tx.transferObjects([account], address);
+    return tx;
+};
+
 // public fun decrypt_and_settle_crypto_vote(
 //     post: &mut Post,
 //     derived_keys: vector<vector<u8>>,

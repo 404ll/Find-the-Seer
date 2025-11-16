@@ -83,7 +83,7 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
       ],
     },
   });
-
+console.log("response", response);
   const posts = response.objects
     .map((object) => {
       if (object.result.oneofKind === 'object') {
@@ -91,6 +91,7 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
       }
       return null;
     })
+    console.log("posts", posts);
   return posts as unknown as Post[];
 };
 
