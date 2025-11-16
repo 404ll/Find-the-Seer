@@ -107,3 +107,14 @@ export interface Seer {
     posts_table_id: string;
     post_fees: number;
 }
+
+export interface Config {
+    id: {id: string};
+    create_post_fee: number;
+    vote_value: number;
+    package_id: string;
+    reward_benchmark: number;
+    key_servers: string[];
+    publickeys: string[][];
+    threshold: number;
+}

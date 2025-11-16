@@ -12,7 +12,7 @@ import {
   setPublicKeys1,
 } from "@/contracts/call";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { getPosts, getAccount, getSeer, getTableContentByGraphql } from "@/contracts/query";
+import { getPosts, getAccount, getSeer, getConfig } from "@/contracts/query";
 import { useEffect } from "react";
 import { useVote } from "@/hooks/useVote";
 import { fetchPublicKeys, sealClient } from "@/utils/seal/encrypt";
@@ -120,6 +120,10 @@ export default function TestPage() {
 
 useEffect (() => {
   getSeer()
+}, []);
+
+useEffect(() => {
+  getConfig()
 }, []);
 
 useEffect(() => {

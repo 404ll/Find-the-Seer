@@ -1,7 +1,6 @@
 import { SealClient, KeyServerConfig, DemType, EncryptedObject } from '@mysten/seal';
-import { networkConfig } from "@/contracts/index";
 import { suiClient } from '@/contracts/index';
-import { toHex,fromHex } from '@mysten/sui/utils';
+import { fromHex } from '@mysten/sui/utils';
 
 //后来由合约对象中取得
 function getTestnetKeyServers(): KeyServerConfig[] {

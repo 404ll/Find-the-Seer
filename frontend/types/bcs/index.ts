@@ -79,3 +79,29 @@ export const PostBcs = bcs.struct('Post', {
       value: bcs.u64(),
     }),
   });
+
+//   public struct Config has key {
+//     id: UID,
+//     create_post_fee: u64,
+//     vote_value: u64,
+//     package_id: address,
+//     reward_benchmark: u64,
+//     key_servers: vector<address>,
+//     publickeys: vector<vector<u8>>,
+//     threshold: u8,
+//     //帖子用户占奖池的比例
+//     // allocation_ratio: u64,
+// }
+
+export const ConfigBcs = bcs.struct('Config', {
+    id: bcs.struct('UID', {
+      id: bcs.Address,
+    }),
+    create_post_fee: bcs.u64(),
+    vote_value: bcs.u64(),
+    package_id: bcs.Address,
+    reward_benchmark: bcs.u64(),
+    key_servers: bcs.vector(bcs.Address),
+    publickeys: bcs.vector(bcs.vector(bcs.u8())),
+    threshold: bcs.u8(),
+  });

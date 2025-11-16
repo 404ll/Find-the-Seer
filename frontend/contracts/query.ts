@@ -1,8 +1,8 @@
 
 import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { networkConfig } from "./index";
-import { Seer, Post, Account } from "../types/raw";
-import { PostBcs, AccountBcs, SeerBcs } from "../types/bcs";
+import { Seer, Post, Account, Config } from "../types/raw";
+import { PostBcs, AccountBcs, SeerBcs, ConfigBcs } from "../types/bcs";
 import { SuiGraphQLClient } from '@mysten/sui/graphql';
 import {getTableContent} from './graphl';
 
@@ -26,7 +26,7 @@ export const getTableContentByGraphql = async (address: string): Promise<Record<
   const response = await graphqlClient.query({
     query: getTableContent,
     variables: {
-      address: address,
+      tableId: address,
     },
   });
 
@@ -106,4 +106,18 @@ export const getAccount = async (accountId: string): Promise<Account> => {
   });
   const account = AccountBcs.parse(response.objects[0]?.contents?.value as Uint8Array);
   return account as unknown as Account;
+};
+
+export const getConfig = async (): Promise<Config> => {
+  const { response } = await grpcClient.ledgerService.getObject({
+    objectId: networkConfig.testnet.variables.Config,
+    readMask: {
+      paths: [
+        "contents",
+      ],
+    },
+  });
+  const config = ConfigBcs.parse(response.object?.contents?.value as Uint8Array);
+  console.log("config", config);
+  return config as unknown as Config;
 };
