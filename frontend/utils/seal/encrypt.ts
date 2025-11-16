@@ -67,29 +67,14 @@ export async function encryptVote(
   return encryptedObjectBytes;
 }
 
+export const fetchPublicKeys = async (keyServers: string[]): Promise<number[][]> => {
+  const g2Elements = await sealClient.getPublicKeys(keyServers);
+  const publicKeysArray: number[][] = g2Elements.map((g2Element) => {
+    const bytes = g2Element.toBytes();
+    return Array.from(bytes);
+  });
 
-export async function encryptMultipleVotes(
-  votes: Array<{
-    choice: boolean;
-    address: string;
-  }>,
-  packageId: string,
-  postId: string,
-  threshold: number = 2
-): Promise<Uint8Array[]> {
-  const encryptedVotes: Uint8Array[] = [];
-  
-  for (const vote of votes) {
-    const encrypted = await encryptVote(
-      vote.choice,
-      vote.address,
-      packageId,
-      postId,
-      threshold
-    );
-    encryptedVotes.push(encrypted);
-  }
-  
-  return encryptedVotes;
-}
+  console.log("Public keys:", publicKeysArray);
+  return publicKeysArray;
+};
 

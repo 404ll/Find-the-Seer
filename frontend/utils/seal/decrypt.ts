@@ -43,16 +43,14 @@ export async function fetchDerivedKeysForContract(
 
   const derivedKeysArray: number[][] = keyServerAddresses.map((keyServerAddress) => {
     const derivedKey = derivedKeys.get(keyServerAddress);
-    const derivedKeyString = derivedKey?.toString() ?? '';
     if (!derivedKey) {
-      throw new Error(`找不到 key server ${keyServerAddress} 的派生密钥`);
+      throw new Error(`could not find derived key for key server ${keyServerAddress}`);
     }
+    const derivedKeyString = derivedKey.toString();
     const derivedKeyBytes = fromHex(derivedKeyString);
     return Array.from(derivedKeyBytes);
+
   });
-  // 因为seal_approve的参数是id，所以需要将id的顺序反转，后来改
-  console.log("derivedKeysArray--------------------------------------------------------", derivedKeysArray);
-  // const derivedKeysA: number[][] = [derivedKeysArray[1], derivedKeysArray[0]];
   return {
     derivedKeys: derivedKeysArray,
     keyServerAddresses: keyServerAddresses

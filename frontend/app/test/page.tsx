@@ -15,7 +15,7 @@ import { ConnectButton } from "@mysten/dapp-kit";
 import { getPosts, getAccount, getSeer, getTableContentByGraphql } from "@/contracts/query";
 import { useEffect } from "react";
 import { useVote } from "@/hooks/useVote";
-import { sealClient } from "@/utils/seal/encrypt";
+import { fetchPublicKeys, sealClient } from "@/utils/seal/encrypt";
 import { fetchDerivedKeysForContract } from "@/utils/seal/decrypt";
 import { networkConfig } from "@/contracts";
 import { suiClient } from "@/contracts";
@@ -30,7 +30,6 @@ export default function TestPage() {
   const KEY_SERVER_2 = '0x6068c0acb197dddbacd4746a9de7f025b2ed5a5b6c1b1ab44dade4426d141da2';
 
   const KEY_SERVERS = [KEY_SERVER_0, KEY_SERVER_1, KEY_SERVER_2];
-  const THRESHOLD = 2;
 
   const { vote, isEncrypting, error: voteError } = useVote();
 
@@ -96,22 +95,6 @@ export default function TestPage() {
     );
   }
 
-  const fetchPublicKeys = async (keyServers: string[]): Promise<number[][]> => {
-    try {
-      const g2Elements = await sealClient.getPublicKeys(keyServers);
-      const publicKeysArray: number[][] = g2Elements.map((g2Element) => {
-        const bytes = g2Element.toBytes();
-        return Array.from(bytes);
-      });
-
-      console.log("Public keys:", publicKeysArray);
-      return publicKeysArray;
-    } catch (error) {
-      console.error("获取 public keys 失败:", error);
-      throw error;
-    }
-  };
-
   useEffect(() => {
     if (keyServers.length > 0) {
       fetchPublicKeys(keyServers)
@@ -119,7 +102,7 @@ export default function TestPage() {
           setPublicKeys(keys);
         })
         .catch((error) => {
-          console.error("获取 public keys 失败:", error);
+          console.error("failed to fetch public keys:", error);
         });
     }
   }, [keyServers]);
@@ -131,9 +114,7 @@ export default function TestPage() {
 
   useEffect(() => {
     if (currentAccount) {
-      getAccount(currentAccount.address).then((response) => {
-        console.log(response);
-      });
+      getAccount(currentAccount.address)
     }
   }, [currentAccount]);
 
