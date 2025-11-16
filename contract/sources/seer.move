@@ -340,6 +340,7 @@ public fun decrypt_and_settle_crypto_vote(
     ctx: &mut TxContext,
 ) {
     assert!(post.created_at + post.lasting_time <= clock.timestamp_ms(), EInvalidSettleTime);
+    assert!(post.status == POST_STATUS_PENDING, EAlreadySettled);
     if (post.total_votes_count == 0) {
         post.status = POST_STATUS_NO_VOTES;
     } else {
