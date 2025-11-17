@@ -12,7 +12,6 @@
 
 export interface Account {
     id: {id: string};
-    name: string;
     vote_profit: number;
     author_profit: number;
     owned_posts: string[];

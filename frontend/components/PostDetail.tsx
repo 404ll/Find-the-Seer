@@ -8,6 +8,9 @@ interface PostDetailProps {
 export default function PostDetail({ post, onClose }: PostDetailProps) {
     // 计算总票数
     const totalVotes = post.trueVotesCount + post.falseVotesCount;
+    const truthRatioTrue = post.trueRatio;
+    const truthRatioFalse = 10 - truthRatioTrue;
+    const truthRatioDisplay = `${truthRatioTrue} / ${truthRatioFalse}`;
     return (
         <div 
             className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -29,11 +32,12 @@ export default function PostDetail({ post, onClose }: PostDetailProps) {
 
                 {/* 主要内容 */}
             <div className="flex flex-col gap-4">
-                <h1 className="text-black text-2xl font-cbyg text-center whitespace-pre-wrap break-words max-w-full overflow-hidden" 
-                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                <div
+                    className="text-black text-2xl font-cbyg text-center whitespace-pre-wrap break-words max-w-full overflow-hidden"
+                    style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                >
                     {parseMarkdown(post.content)}
-                </h1>
-
+                </div>
             </div>
 
             {/* 黑色信息框 */}
@@ -49,10 +53,13 @@ export default function PostDetail({ post, onClose }: PostDetailProps) {
                     Deadline : <span className="ml-2">{post.deadline}</span>
                 </div>
                 <div className="text-white text-xl font-cbyg">
-                    Lasting Time : <span className="ml-2">{Math.round(post.lastingTime / 3600)} hours</span>
+                    Lasting Time : <span className="ml-2">{Math.round(post.lastingTime)} hours</span>
                 </div>
                 <div className="text-white text-xl font-cbyg">
                     Total Votes : <span className="ml-2">{totalVotes}</span>
+                </div>
+                <div className="text-white text-xl font-cbyg">
+                    Truth Ratio : <span className="ml-2">{truthRatioDisplay}</span>
                 </div>
 
             </div>

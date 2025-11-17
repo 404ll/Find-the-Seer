@@ -13,127 +13,8 @@ import { Post } from "@/types/display";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useUser } from "@/context/UserContext";
 import { createAccountAndPost, createPost } from "@/contracts/call";
-import { useBetterSignAndExecuteTransaction, useBetterSignAndExecuteTransactionAsync } from "@/hooks/useBetterTx";
+import { useBetterSignAndExecuteTransaction } from "@/hooks/useBetterTx";
 
-const mockData = {
-    walletAddress: "0x1234567890123456789012345678901234567890",
-    influence: 100,
-    totalVotes: 100,
-    totalPosts: 100,
-    profit: 100,
-    posts: [
-        {
-            content: "The world is ending in 100 seconds from now hfoasblsdjfpdsahvpainvpaivnpaijsdvpiadhnvpiadhnvcoasbcoasbcoabcoajbobcoasbcoasubcoausbcoasbcoausbc",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 45,
-            falseVotesCount: 15,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 7,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 30,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 50,
-            trueFalseRatio: 6,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 25,
-            falseVotesCount: 35,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 5,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 50,
-            falseVotesCount: 10,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 8,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 0,
-            trueVotesCount: 20,
-            falseVotesCount: 30,
-            status: "Closed",
-            votecount: 50,
-            trueFalseRatio: 4,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 40,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 6,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 40,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 6,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 40,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 6,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 40,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 6,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 40,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 6,
-        },
-        {
-            content: "The world is ending",
-            createdAt: "2025-01-01",
-            lastingTime: 100,
-            trueVotesCount: 40,
-            falseVotesCount: 20,
-            status: "Active",
-            votecount: 60,
-            trueFalseRatio: 6,
-        },
-    ] as Post[],
-}
 
 
 export default function ProfilePage() {
@@ -221,9 +102,9 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-row items-center justify-center px-8 pt-20 gap-12 relative z-10">
-                <ProfileCard {...mockData} />
+                <ProfileCard user={user} />
                 <OwnPostList 
-                    posts={mockData.posts} 
+                    posts={user?.ownedPosts ?? []} 
                     onPostClick={(post) => handleOpenModal(post)}
                 />
             </div>

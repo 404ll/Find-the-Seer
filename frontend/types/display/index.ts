@@ -8,7 +8,7 @@ export interface Post {
     falseVotesCount: number;
     votecount: number;
     status: PostStatus;
-    trueFalseRatio: number;
+    trueRatio: number;
     // authorClaimed: boolean;
 }
 
@@ -42,7 +42,6 @@ export enum PostStatus {
 
 export interface User {
     id: string;
-    name: string;
     voteProfit: number;
     authorProfit: number;
     ownedPosts: Post[];

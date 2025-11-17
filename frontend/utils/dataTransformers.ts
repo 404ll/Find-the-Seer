@@ -52,23 +52,16 @@ export async function accountToUser(account: Account): Promise<User> {
     postMap.set(post.id.id, post);
   });
 
-  // 转换 owned_posts
-  // const ownedPostsPromises = account.owned_posts
-  //   .map((postId) => postMap.get(postId))
-  //   .filter((post): post is RawPost => post !== undefined)
-  //   .map((post) => rawPostToDisplayPost(post));
+  const buildPostPromises = (postIds: string[]) =>
+    postIds
+      .map((postId) => postMap.get(postId))
+      .filter((post): post is RawPost => post !== undefined)
+      .map((post) => rawPostToDisplayPost(post));
 
-  // // 转换 voted_posts
-  // const votedPostsPromises = account.voted_posts
-  //   .map((postId) => postMap.get(postId))
-  //   .filter((post): post is RawPost => post !== undefined)
-  //   .map((post) => rawPostToDisplayPost(post));
-
-  // // 转换 claimed_posts
-  // const claimedPostsPromises = account.claimed_posts
-  //   .map((postId) => postMap.get(postId))
-  //   .filter((post): post is RawPost => post !== undefined)
-  //   .map((post) => rawPostToDisplayPost(post));
+  // 转换 owned_posts / voted_posts / claimed_posts
+  const ownedPostsPromises = buildPostPromises(account.owned_posts);
+  const votedPostsPromises = buildPostPromises(account.voted_posts);
+  const claimedPostsPromises = buildPostPromises(account.claimed_posts);
 
   // 并行等待所有 posts 转换完成
   const [ownedPosts, votedPosts, claimedPosts] = await Promise.all([
@@ -79,7 +72,6 @@ export async function accountToUser(account: Account): Promise<User> {
 
   return {
     id: account.id.id,
-    name: account.name,
     voteProfit: account.vote_profit,
     authorProfit: account.author_profit,
     ownedPosts,
@@ -92,20 +84,13 @@ export async function accountToUser(account: Account): Promise<User> {
  * 将 Post (raw) 转换为 Post (display)
  */
 export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> {
-  console.log("rawPostToDisplayPost post", post);
   // 计算 true/false votes
   const trueVotesCount = post.derived_vote_result?.true_votes_count || 0;
   const falseVotesCount = post.derived_vote_result?.false_votes_count || 0;
   const totalVotes = trueVotesCount + falseVotesCount;
 
   // 计算 true/false ratio (1-9 范围)
-  let trueFalseRatio = 5; // 默认值
-  if (totalVotes > 0) {
-    const trueRatio = trueVotesCount / totalVotes;
-    // 将 0-1 的比例转换为 1-9 的范围
-    trueFalseRatio = Math.round(trueRatio * 8) + 1;
-  }
-
+  const trueRatio = Number(post.predicted_true_bp / 1000); //0-10范围
 // 转换 status
   // status: 0 = Active, 1 = Closed, 2 = Verify 
   let status: PostStatus = PostStatus.Active;
@@ -179,7 +164,7 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
 
   // 计算 deadline：createdAt + lastingTime
   const lasting_time_num = Number(post.lasting_time);
-  const deadlineDate = new Date(createdDate.getTime() + lasting_time_num * 3600 * 1000);
+  const deadlineDate = new Date(createdDate.getTime() + lasting_time_num);
   const deadline = deadlineDate.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -197,13 +182,13 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
     id: post.id.id, // 添加 Post ID
     content: content,
     createdAt,
-    lastingTime: lasting_time_num,
+    lastingTime: Number(post.lasting_time)/3600000,
     deadline,
     trueVotesCount,
     falseVotesCount,
     status,
     votecount: totalVotes,
-    trueFalseRatio,
+    trueRatio
   };
 }
 

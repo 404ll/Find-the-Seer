@@ -65,8 +65,8 @@ export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProp
       // console.log("上传成功,blobId:", result.blobId);
       setBlobId(result.blobId);
       // 上传成功后关闭表单
-      const lastingTime = epoch * 24 - 4;
-      console.log("trueRatio",trueRatio)
+      //lastingtime转为链上时间格式,单位为豪秒
+      const lastingTime = (epoch * 24) * 60 * 60 * 1000;
       // trueRatio 是 1-9，表示 true:false 的比例，需要转换为万分比 (0-10000)
       // 例如：trueRatio = 7 表示 7:3，true 的比例是 7/10 = 70% = 7000 BP
       const trueBp = (trueRatio / 10) * 10000;

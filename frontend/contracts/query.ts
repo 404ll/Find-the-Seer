@@ -139,7 +139,7 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
   return posts as unknown as Post[];
 };
 
-export const getAccount = async (accountId: string): Promise<Account> => {
+export const getAccount = async (accountId: string): Promise<Account | null> => {
   const { response } = await grpcClient.stateService.listOwnedObjects({
     owner: accountId,
     objectType: `${networkConfig.testnet.variables.Package}::seer::Account`,
@@ -149,7 +149,13 @@ export const getAccount = async (accountId: string): Promise<Account> => {
       ],
     },
   });
-  const account = AccountBcs.parse(response.objects[0]?.contents?.value as Uint8Array);
+  const rawAccount = response.objects?.[0]?.contents?.value as Uint8Array | undefined;
+
+  if (!rawAccount) {
+    return null;
+  }
+
+  const account = AccountBcs.parse(rawAccount);
   return account as unknown as Account;
 };
 

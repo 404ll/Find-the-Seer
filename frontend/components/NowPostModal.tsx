@@ -12,6 +12,9 @@ export default function NowPostModal({
     post, 
 }: NowPostModalProps) {
     if (!isOpen) return null;
+    const truthRatioTrue = post.trueRatio;
+    const truthRatioFalse = 10 - truthRatioTrue;
+    const truthRatioDisplay = `${truthRatioTrue} / ${truthRatioFalse}`;
 
     return (
         <div 
@@ -41,7 +44,7 @@ export default function NowPostModal({
                         Verifier : <span className="ml-2">{post.votecount}</span>
                     </div>
                     <div className="text-white text-xl font-cbyg">
-                        Truth Ratio : <span className="ml-2">{post.trueFalseRatio}</span>
+                        Truth Ratio : <span className="ml-2">{truthRatioDisplay}</span>
                     </div>
                 </div>
 

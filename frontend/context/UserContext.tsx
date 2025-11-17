@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { getAccount } from "../contracts/query";
 import { User } from "@/types/display";
 import { accountToUser } from "@/utils/dataTransformers";
@@ -19,7 +19,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshUser = async (address: string) => {
+  const refreshUser = useCallback(async (address: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -39,12 +39,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
   
 
 
-  const value = useMemo(() => ({ user, isLoading, error, refreshUser }), [user, isLoading, error]);
+  const value = useMemo(() => ({ user, isLoading, error, refreshUser }), [user, isLoading, error, refreshUser]);
 
   return (
     <UserContext.Provider value={value}>

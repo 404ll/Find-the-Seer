@@ -1,21 +1,19 @@
 import {
     Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+    CardContent
   } from "@/components/ui/card"
 import Image from "next/image";
+import { User } from "@/types/display";
 
 interface ProfileCardProps {
-    walletAddress: string;
-    influence: number;
-    totalVotes: number;
-    totalPosts: number;
-    profit: number; 
+    user: User | null;
 }
-export default function ProfileCard({ walletAddress, influence, totalVotes, totalPosts, profit }: ProfileCardProps) {
+export default function ProfileCard({ user }: ProfileCardProps) {
+    const totalVotes = user?.votedPosts?.length ?? 0;
+    const totalPosts = user?.ownedPosts?.length ?? 0;
+    const voteProfit = user?.voteProfit ?? 0;
+    const authorProfit = user?.authorProfit ?? 0;
+
     return (
         <Card className="bg-white rounded-[12px] p-4 flex flex-col">
            
@@ -33,7 +31,7 @@ export default function ProfileCard({ walletAddress, influence, totalVotes, tota
                 {/* <p>address: {walletAddress}</p> */}
                 <div className="flex flex-row items-center gap-2">
                     {/* <Image src="/icon/influence.svg" alt="Wallet Address" width={30} height={30} /> */}
-                    <span>Influence: <u>{influence}</u></span>
+                    <span>Influence: <u>123</u></span>
                 </div>
                 <div className="flex flex-row items-center gap-2">
                     {/* <Image src="/icon/vote.svg" alt="Wallet Address" width={30} height={30} /> */}
@@ -45,11 +43,11 @@ export default function ProfileCard({ walletAddress, influence, totalVotes, tota
                 </div>
                 <div className="flex flex-row items-center gap-2">
                     {/* <Image src="/icon/profit.svg" alt="Wallet Address" width={30} height={30} /> */}
-                    <span>vote profit: <u>{profit}</u></span>
+                    <span>vote profit: <u>{voteProfit}</u></span>
                 </div>
                 <div className="flex flex-row items-center gap-2">
                     {/* <Image src="/icon/profit.svg" alt="Wallet Address" width={30} height={30} /> */}
-                    <span>post profit: <u>{profit}</u></span>
+                    <span>post profit: <u>{authorProfit}</u></span>
                 </div>
             </CardContent>
         </Card>
