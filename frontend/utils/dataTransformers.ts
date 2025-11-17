@@ -27,28 +27,31 @@ export async function accountToUser(account: Account): Promise<User> {
   });
 
   // 转换 owned_posts
-  const ownedPostsPromises = account.owned_posts
-    .map((postId) => postMap.get(postId))
-    .filter((post): post is RawPost => post !== undefined)
-    .map((post) => rawPostToDisplayPost(post));
+  // const ownedPostsPromises = account.owned_posts
+  //   .map((postId) => postMap.get(postId))
+  //   .filter((post): post is RawPost => post !== undefined)
+  //   .map((post) => rawPostToDisplayPost(post));
 
-  // 转换 voted_posts
-  const votedPostsPromises = account.voted_posts
-    .map((postId) => postMap.get(postId))
-    .filter((post): post is RawPost => post !== undefined)
-    .map((post) => rawPostToDisplayPost(post));
+  // // 转换 voted_posts
+  // const votedPostsPromises = account.voted_posts
+  //   .map((postId) => postMap.get(postId))
+  //   .filter((post): post is RawPost => post !== undefined)
+  //   .map((post) => rawPostToDisplayPost(post));
 
-  // 转换 claimed_posts
-  const claimedPostsPromises = account.claimed_posts
-    .map((postId) => postMap.get(postId))
-    .filter((post): post is RawPost => post !== undefined)
-    .map((post) => rawPostToDisplayPost(post));
+  // // 转换 claimed_posts
+  // const claimedPostsPromises = account.claimed_posts
+  //   .map((postId) => postMap.get(postId))
+  //   .filter((post): post is RawPost => post !== undefined)
+  //   .map((post) => rawPostToDisplayPost(post));
 
   // 并行等待所有 posts 转换完成
   const [ownedPosts, votedPosts, claimedPosts] = await Promise.all([
-    Promise.all(ownedPostsPromises),
-    Promise.all(votedPostsPromises),
-    Promise.all(claimedPostsPromises),
+    // Promise.all(ownedPostsPromises),
+    // Promise.all(votedPostsPromises),
+    // Promise.all(claimedPostsPromises),
+    [],
+    [],
+    [],
   ]);
 
   return {
