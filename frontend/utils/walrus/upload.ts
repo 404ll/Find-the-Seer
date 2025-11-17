@@ -106,35 +106,57 @@ function getSponsorKeypair(): Ed25519Keypair {
 }
 
 export async function uploadPostContent(
-  options: UploadPostOptions
+  options: UploadPostOptions,
+  maxRetries: number = 2
 ): Promise<UploadPostResult> {
   const { file, epochs } = options;
 
-  const client = createWalrusClient();
+  let lastError: Error | null = null;
+  
+  // 重试逻辑：在网络不稳定时提高成功率
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[Walrus] 开始上传 (尝试 ${attempt}/${maxRetries})...`);
+      
+      const client = createWalrusClient();
+      const sponsorSigner = getSponsorKeypair();
 
-  // 使用代付 keypair 来支付上传费用
-  const sponsorSigner = getSponsorKeypair();
+      // 使用 Upload Relay 上传（只需上传一次，relay 会处理与存储节点的通信）
+      const results = await client.walrus.writeFiles({
+        files: [file],
+        epochs,
+        deletable: true,
+        signer: sponsorSigner,
+      });
 
-  try {
-    //你用的http
-    const results = await client.walrus.writeFiles({
-      files: [file],
-      epochs,
-      deletable: true,
-      signer: sponsorSigner,
-    });
+      // writeFiles 返回数组，取第一个结果
+      if (!results || results.length === 0) {
+        throw new Error('上传失败：未返回结果');
+      }
 
-    // writeFiles 返回数组，取第一个结果
-    if (!results || results.length === 0) {
-      throw new Error('上传失败：未返回结果');
+      const result = results[0];
+      console.log(`[Walrus] ✅ 上传成功 (尝试 ${attempt}/${maxRetries}):`, {
+        blobId: result.blobId,
+        objectId: result.blobObject.id.id,
+      });
+
+      return result;
+      
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`[Walrus] ❌ 上传失败 (尝试 ${attempt}/${maxRetries}):`, error);
+      
+      // 如果还有重试机会，等待后重试
+      if (attempt < maxRetries) {
+        const delayMs = 1000 * attempt; // 递增延迟：1秒、2秒
+        console.log(`[Walrus] ⏳ ${delayMs}ms 后重试...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
     }
-
-    const result = results[0];
-    console.log('[Walrus] 上传成功:', result);
-
-    return result;
-  } catch (error) {
-    console.error('[Walrus] 上传失败:', error);
-    throw new Error(`上传失败: ${error instanceof Error ? error.message : String(error)}`);
   }
+  
+  // 所有重试都失败
+  throw new Error(
+    `上传失败（已尝试 ${maxRetries} 次）: ${lastError?.message || '未知错误'}`
+  );
 }

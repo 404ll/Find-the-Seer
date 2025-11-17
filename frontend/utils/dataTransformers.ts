@@ -1,7 +1,7 @@
 import { Account, Post as RawPost } from "@/types/raw";
 import { User, Post as DisplayPost, PostStatus } from "@/types/display";
 import { getPosts } from "@/contracts/query";
-import {readUserPostContent} from "./walrus/download";
+// import {readUserPostContent} from "./walrus/download";
 /**
  * 将 Account (raw) 转换为 User (display)
  * 需要异步获取 posts 数据
@@ -46,9 +46,12 @@ export async function accountToUser(account: Account): Promise<User> {
 
   // 并行等待所有 posts 转换完成
   const [ownedPosts, votedPosts, claimedPosts] = await Promise.all([
-    Promise.all(ownedPostsPromises),
-    Promise.all(votedPostsPromises),
-    Promise.all(claimedPostsPromises),
+    [],
+    [],
+    [],
+    // Promise.all(ownedPostsPromises),
+    // Promise.all(votedPostsPromises),
+    // Promise.all(claimedPostsPromises),
   ]);
 
   return {
@@ -105,9 +108,10 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
     createdAt = new Date().toISOString().split("T")[0];
   }
 
-  const content =await readUserPostContent(post.blob_id);
+  // const content =await readUserPostContent(post.blob_id);
   return {
-    content: content,
+    // content: content,
+    content: "",
     createdAt,
     lastingTime: post.lasting_time,
     trueVotesCount,
