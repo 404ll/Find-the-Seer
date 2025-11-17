@@ -5,6 +5,29 @@ import { Seer } from "@/types/raw";
 import { DisplaySeer } from "@/types/display";
 import { readUserPostContent } from "./walrus/download";
 // import {readUserPostContent} from "./walrus/download";
+
+const postContentCache = new Map<string, Promise<string>>();
+
+async function getPostContentWithCache(blobId: string): Promise<string> {
+  if (!postContentCache.has(blobId)) {
+    const contentPromise = readUserPostContent(blobId).catch((error) => {
+      postContentCache.delete(blobId);
+      throw error;
+    });
+    postContentCache.set(blobId, contentPromise);
+  }
+  return postContentCache.get(blobId)!;
+}
+
+export function invalidatePostContentCache(blobIds?: string | string[]) {
+  if (!blobIds) {
+    postContentCache.clear();
+    return;
+  }
+
+  const ids = Array.isArray(blobIds) ? blobIds : [blobIds];
+  ids.forEach((id) => postContentCache.delete(id));
+}
 /**
  * 将 Account (raw) 转换为 User (display)
  * 需要异步获取 posts 数据
@@ -49,12 +72,9 @@ export async function accountToUser(account: Account): Promise<User> {
 
   // 并行等待所有 posts 转换完成
   const [ownedPosts, votedPosts, claimedPosts] = await Promise.all([
-    [],
-    [],
-    [],
-    // Promise.all(ownedPostsPromises),
-    // Promise.all(votedPostsPromises),
-    // Promise.all(claimedPostsPromises),
+    Promise.all(ownedPostsPromises),
+    Promise.all(votedPostsPromises),
+    Promise.all(claimedPostsPromises),
   ]);
 
   return {
@@ -171,7 +191,7 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
   });
 
 
-  const content = await readUserPostContent(post.blob_id);
+  const content = await getPostContentWithCache(post.blob_id);
   // const content =await readUserPostContent(post.blob_id);
   return {
     id: post.id.id, // 添加 Post ID
@@ -190,12 +210,24 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
 
 export async function rawSeerToDisplaySeer(seer: Seer): Promise<DisplaySeer> {
   const userPosts = await getTableContentByGraphql(seer.posts_table_id);
-  const postIds = Object.values(userPosts).flat();
+  const postIds = Object.values(userPosts)
+    .flat()
+    .filter((id): id is string => Boolean(id));
+  const uniquePostIds = Array.from(new Set(postIds));
 
-  const rawPosts = await getPosts(postIds);
-  const displayPosts: Post[] = await Promise.all(
-    rawPosts.map((post) => rawPostToDisplayPost(post))
-  );
+  let displayPosts: Post[] = [];
+
+  if (uniquePostIds.length > 0) {
+    const rawPosts = await getPosts(uniquePostIds);
+    const rawPostMap = new Map(rawPosts.map((post) => [post.id.id, post]));
+    const orderedRawPosts = uniquePostIds
+      .map((postId) => rawPostMap.get(postId))
+      .filter((post): post is RawPost => Boolean(post));
+
+    displayPosts = await Promise.all(
+      orderedRawPosts.map((post) => rawPostToDisplayPost(post))
+    );
+  }
   
   const displaySeer: DisplaySeer = {
     id: seer.id,

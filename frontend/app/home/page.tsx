@@ -1,8 +1,8 @@
 "use client";
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import PostList from '@/components/PostList';
-import { DisplaySeer, Post, PostStatus } from '@/types/display';
+import { Post } from '@/types/display';
 import PostDetail from '@/components/PostDetail';
 import Image from 'next/image';
 import { useUser } from '@/context/UserContext';
@@ -10,8 +10,7 @@ import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useBetterSignAndExecuteTransaction } from '@/hooks/useBetterTx';
 import { useDerivedKeys } from '@/hooks/useDerivedKeys';
 import { createAccountAndVotePost, decryptAndSettleCryptoVote, votePost } from '@/contracts/call';
-import { getPosts, getSeer} from '@/contracts/query';
-import { rawSeerToDisplaySeer } from '@/utils/dataTransformers';
+import { useSeerData } from '@/hooks/useSeerData';
 
 
 const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
@@ -27,8 +26,12 @@ export default function HomePage() {
     error: derivedKeysError,
     fetchDerivedKeys 
   } = useDerivedKeys();
-  const [seer, setSeer] = useState<DisplaySeer | null>(null);
-  const [totalPages, setTotalPages] = useState(0);
+  const { 
+    seer, 
+    isLoading: isSeerLoading, 
+    error: seerError, 
+    refreshSeerAfterTx 
+  } = useSeerData();
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
 
@@ -37,29 +40,29 @@ export default function HomePage() {
   const {handleSignAndExecuteTransaction: votePostTx} = useBetterSignAndExecuteTransaction({ tx: votePost});
   const {handleSignAndExecuteTransaction: verifyPostTx} = useBetterSignAndExecuteTransaction({ tx: decryptAndSettleCryptoVote});
 
-  //获取所有帖子
-  // const getPostsData = async () => {
-  //   const posts = await getPosts();
-  //   setPosts(posts);
-  // };
+  const triggerDataRefresh = useCallback((address?: string) => {
+    if (address) {
+      refreshUser(address);
+    }
+    refreshSeerAfterTx();
+  }, [refreshUser, refreshSeerAfterTx]);
+
+  const totalPages = useMemo(() => {
+    const totalPosts = seer?.posts.length ?? 0;
+    return Math.ceil(totalPosts / ITEMS_PER_PAGE);
+  }, [seer]);
+
   useEffect(() => {
     if (currentAccount) {
       refreshUser(currentAccount.address);
     }
-  }, [currentAccount]);
+  }, [currentAccount, refreshUser]);
 
   useEffect(() => {
-    getSeerData();
-  }, []);
-
-  const getSeerData = async () => {
-    const seer = await getSeer();
-    const displaySeer = await rawSeerToDisplaySeer(seer);
-    setSeer(displaySeer);
-    console.log("displaySeer", displaySeer.posts);
-    const totalPages = Math.ceil(displaySeer.posts.length / ITEMS_PER_PAGE);
-    setTotalPages(totalPages);
-  };
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   // 上一页
   const handlePrevious = () => {
@@ -93,7 +96,7 @@ export default function HomePage() {
     if(!user) {
       createAccountAndVotePostTx({ address: currentAccount.address, postId, cryptoVoteData }).onSuccess(() => {
         console.log("Vote post successfully");
-        refreshUser(currentAccount.address);
+        triggerDataRefresh(currentAccount.address);
       }).onError((error) => {
         console.error(error);
       }).execute();
@@ -102,7 +105,7 @@ export default function HomePage() {
     // 用户已有账户，使用 user.id 作为 accountId
     votePostTx({ address: currentAccount.address, postId, accountId: user.id, cryptoVoteData }).onSuccess(() => {
       console.log("Vote post successfully");
-      refreshUser(currentAccount.address);
+      triggerDataRefresh(currentAccount.address);
     }).onError((error) => {
       console.error(error);
     }).execute();
@@ -127,6 +130,7 @@ export default function HomePage() {
         keyServers: fetchedKeyServers 
       }).onSuccess(() => {
         console.log("Verify post successfully");
+        triggerDataRefresh(currentAccount.address);
       }).onError((error) => {
         console.error(error);
       }).execute();
