@@ -2,73 +2,17 @@
 import { useState, useMemo, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import PostList from '@/components/PostList';
-import { Post, PostStatus } from '@/types/display';
+import { DisplaySeer, Post, PostStatus } from '@/types/display';
 import PostDetail from '@/components/PostDetail';
 import Image from 'next/image';
 import { useUser } from '@/context/UserContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-const posts: Post[] = [
-      {
-          content: "# The World is Ending\n\nIn **100 seconds** from now, the world as we know it will come to an end.\n\n## What to expect:\n- Complete chaos\n- Final moments\n- The end of everything\n\n> This is a prophecy that cannot be ignored.",
-          createdAt: "2025-01-01",
-          lastingTime: 100,
-          trueVotesCount: 45,
-          falseVotesCount: 15,
-          status: PostStatus.Active,
-          votecount: 60,
-          trueFalseRatio: 7,
-      },
-      {
-          content: "# Prophecy of Change\n\nThe world is ending, but this is not the end. It is a **new beginning**.\n\n## Signs to watch:\n1. The stars will align\n2. The earth will shake\n3. A new era will dawn",
-          createdAt: "2025-01-01",
-          lastingTime: 100,
-          trueVotesCount: 30,
-          falseVotesCount: 20,
-          status: PostStatus.Verify,
-          votecount: 50,
-          trueFalseRatio: 6,
-      },
-      {
-          content: "## Silent Prophecy\n\nSometimes, the most powerful messages are those left unspoken.\n\n*The silence speaks volumes.*",
-          createdAt: "2025-01-01",
-          lastingTime: 100,
-          trueVotesCount: 25,
-          falseVotesCount: 35,
-          status: PostStatus.Active,
-          votecount: 60,
-          trueFalseRatio: 5,
-      },
-      {
-          content: "# The Final Countdown\n\n**Time is running out.**\n\nThe world is ending, and we must prepare.\n\n### What we know:\n- The prophecy is clear\n- The signs are everywhere\n- The end is near\n\n> Trust in the prophecy.",
-          createdAt: "2025-01-01",
-          lastingTime: 100,
-          trueVotesCount: 50,
-          falseVotesCount: 10,
-          status: PostStatus.Active,
-          votecount: 60,
-          trueFalseRatio: 8,
-      },
-      {
-          content: "# Past Prophecy\n\nThis prophecy has already come to pass.\n\nThe world ended, and we survived.\n\n## Lessons learned:\n- Prophecies can be true\n- But we are stronger\n- We endure",
-          createdAt: "2025-01-01",
-          lastingTime: 0,
-          trueVotesCount: 20,
-          falseVotesCount: 30,
-          status: PostStatus.Closed,
-          votecount: 50,
-          trueFalseRatio: 4,
-      },
-      {
-          content: "## The Seer's Vision\n\nThe world is ending, but not in the way you think.\n\n**Key points:**\n- Transformation, not destruction\n- Evolution, not extinction\n- Hope, not despair\n\n> The future is unwritten.",
-          createdAt: "2025-01-01",
-          lastingTime: 100,
-          trueVotesCount: 40,
-          falseVotesCount: 20,
-          status: PostStatus.Verify,
-          votecount: 60,
-          trueFalseRatio: 6,
-      },
-];
+import { useBetterSignAndExecuteTransaction } from '@/hooks/useBetterTx';
+import { useDerivedKeys } from '@/hooks/useDerivedKeys';
+import { createAccountAndVotePost, decryptAndSettleCryptoVote, votePost } from '@/contracts/call';
+import { getPosts, getSeer} from '@/contracts/query';
+import { rawSeerToDisplaySeer } from '@/utils/dataTransformers';
+
 
 const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
 
@@ -76,22 +20,46 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const { user, isLoading, error, refreshUser } = useUser();
   const currentAccount = useCurrentAccount();
-  console.log(user);
+  const { 
+    derivedKeys, 
+    keyServerAddresses: settleKeyServers, 
+    isLoading: isDerivedKeysLoading,
+    error: derivedKeysError,
+    fetchDerivedKeys 
+  } = useDerivedKeys();
+  const [seer, setSeer] = useState<DisplaySeer | null>(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
+
+
+  const {handleSignAndExecuteTransaction: createAccountAndVotePostTx} = useBetterSignAndExecuteTransaction({ tx: createAccountAndVotePost});
+  const {handleSignAndExecuteTransaction: votePostTx} = useBetterSignAndExecuteTransaction({ tx: votePost});
+  const {handleSignAndExecuteTransaction: verifyPostTx} = useBetterSignAndExecuteTransaction({ tx: decryptAndSettleCryptoVote});
+
+  //获取所有帖子
+  // const getPostsData = async () => {
+  //   const posts = await getPosts();
+  //   setPosts(posts);
+  // };
   useEffect(() => {
     if (currentAccount) {
       refreshUser(currentAccount.address);
     }
   }, [currentAccount]);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  // 计算总页数
-  const totalPages = Math.ceil(posts.length / ITEMS_PER_PAGE);
 
-  // 计算当前页显示的数据
-  const currentPosts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return posts.slice(startIndex, endIndex);
-  }, [currentPage]);
+  useEffect(() => {
+    getSeerData();
+  }, []);
+
+  const getSeerData = async () => {
+    const seer = await getSeer();
+    const displaySeer = await rawSeerToDisplaySeer(seer);
+    setSeer(displaySeer);
+    console.log("displaySeer", displaySeer.posts);
+    const totalPages = Math.ceil(displaySeer.posts.length / ITEMS_PER_PAGE);
+    setTotalPages(totalPages);
+  };
 
   // 上一页
   const handlePrevious = () => {
@@ -114,6 +82,59 @@ export default function HomePage() {
   const handleClosePostDetail = () => {
     setSelectedPost(null);
   };
+
+
+  const handleVotePost = (postId: string, cryptoVoteData: number[]) => {
+    if (!currentAccount) {
+      console.error("Current account not found");
+      return;
+    } 
+    // 如果用户还没有账户，创建账户并投票
+    if(!user) {
+      createAccountAndVotePostTx({ address: currentAccount.address, postId, cryptoVoteData }).onSuccess(() => {
+        console.log("Vote post successfully");
+        refreshUser(currentAccount.address);
+      }).onError((error) => {
+        console.error(error);
+      }).execute();
+      return;
+    }
+    // 用户已有账户，使用 user.id 作为 accountId
+    votePostTx({ address: currentAccount.address, postId, accountId: user.id, cryptoVoteData }).onSuccess(() => {
+      console.log("Vote post successfully");
+      refreshUser(currentAccount.address);
+    }).onError((error) => {
+      console.error(error);
+    }).execute();
+  };
+
+  const handleVerifyPost = async (postId: string) => {
+    if (!currentAccount) {
+      console.error("Current account not found");
+      return;
+    }
+    
+    try {
+      // 获取 derived keys（返回 Promise，可以直接 await）
+      const { derivedKeys: fetchedDerivedKeys, keyServerAddresses: fetchedKeyServers } = 
+        await fetchDerivedKeys(postId);
+      
+      // 执行验证
+      verifyPostTx({ 
+        address: currentAccount.address, 
+        postId, 
+        derivedKeys: fetchedDerivedKeys, 
+        keyServers: fetchedKeyServers 
+      }).onSuccess(() => {
+        console.log("Verify post successfully");
+      }).onError((error) => {
+        console.error(error);
+      }).execute();
+    } catch (error) {
+      console.error("Failed to fetch derived keys:", error);
+    }
+  };
+
   return (
       <div className="min-h-screen flex flex-col bg-black">
         <Navbar />
@@ -139,7 +160,7 @@ export default function HomePage() {
             </div>
         <div className='flex-1 px-8 py-14'>
           <div className='grid grid-cols-1 gap-4 relative z-10 pt-10'>
-            <PostList posts={currentPosts} onPostClick={handlePostClick} />
+            <PostList posts={seer?.posts || []} onPostClick={handlePostClick} onVotePost={handleVotePost} onVerifyPost={handleVerifyPost} />
           </div>
         </div>
        

@@ -1,28 +1,19 @@
-import { Post } from '@/types/display';
+import { Post, PostStatus } from '@/types/display';
 
 interface PostCardProps {
     post: Post;
+    onVotePost: (postId: string, cryptoVoteData: number[]) => void;
+    onVerifyPost: (postId: string) => void;
     onClick?: () => void;
 }
 
-export default function PostCard({ post, onClick }: PostCardProps) {
+export default function PostCard({ post, onVotePost, onClick,onVerifyPost }: PostCardProps) {
     const handleCardClick = (e: React.MouseEvent) => {
         // 如果点击的是按钮，不触发卡片点击
         if ((e.target as HTMLElement).closest('button')) {
             return;
         }
         onClick?.();
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
     };
 
     const getTitle = (content: string) => {
@@ -55,13 +46,13 @@ export default function PostCard({ post, onClick }: PostCardProps) {
             <h1 className='text-black text-2xl font-cbyg text-center'>{getTitle(post.content)}</h1>
 
             <hr className='border-black border-1' />
-            <div className={`flex flex-row items-center gap-4 text-white text-xl font-cbyg ${post.status === 'Active' ? 'justify-between' : 'justify-end'}`}>    
+            <div className={`flex flex-row items-center gap-4 text-white text-xl font-cbyg ${post.status === PostStatus.Active ? 'justify-between' : 'justify-end'}`}>    
                 {/* 截止时间 */} 
-                {post.status === 'Active' && <div className='text-white bg-[#BDBDBD] rounded-[12px] p-2 text-base font-cbyg items-center flex'>Deadline: <span className='ml-2'>{formatDate(post.createdAt + post.lastingTime)}</span></div>}
+                {post.status === 'Active' && <div className='text-white bg-[#BDBDBD] rounded-[12px] p-2 text-base font-cbyg items-center flex'>Deadline: <span className='ml-2'>{post.deadline}</span></div>}
                 <div className='flex flex-row justify-end gap-4' onClick={(e) => e.stopPropagation()}>
-                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300'>True</button>
-                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300'>False</button>
-                    {post.status === 'Verify' && <button className='bg-[#679533] text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300'>Verify</button>}
+                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, [1])}>True</button>
+                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, [0])}>False</button>
+                    {post.status === PostStatus.Verify && <button className='bg-[#679533] text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={()=>onVerifyPost(post.id)}>Verify</button>}
                 </div>
             </div>
         </div>

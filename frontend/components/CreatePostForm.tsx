@@ -11,7 +11,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 
 interface CreatePostFormProps {
   onClose: () => void;
-  onCreate: (address: string, blobId: string, lastingTime: number, predictedTrueBp: number) => void;
+  onCreate: ( blobId: string, lastingTime: number, predictedTrueBp: number) => void;
 }
 export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProps) {
   const [epoch, setEpoch] = useState<number>(1);
@@ -70,8 +70,8 @@ export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProp
       // trueRatio 是 1-9，表示 true:false 的比例，需要转换为万分比 (0-10000)
       // 例如：trueRatio = 7 表示 7:3，true 的比例是 7/10 = 70% = 7000 BP
       const trueBp = (trueRatio / 10) * 10000;
-      onCreate(currentAccount.address, result.blobId, lastingTime, trueBp);
-      // onClose();
+      onCreate( result.blobId, lastingTime, trueBp);
+      onClose();
     } catch (error) {
       console.error("上传失败:", error);
       setUploadError(error instanceof Error ? error.message : "upload failed, please try again");

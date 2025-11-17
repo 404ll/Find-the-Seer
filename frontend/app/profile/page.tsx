@@ -13,7 +13,7 @@ import { Post } from "@/types/display";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useUser } from "@/context/UserContext";
 import { createAccountAndPost, createPost } from "@/contracts/call";
-import { useBetterSignAndExecuteTransactionAsync } from "@/hooks/useBetterTx";
+import { useBetterSignAndExecuteTransaction, useBetterSignAndExecuteTransactionAsync } from "@/hooks/useBetterTx";
 
 const mockData = {
     walletAddress: "0x1234567890123456789012345678901234567890",
@@ -150,16 +150,16 @@ export default function ProfilePage() {
         }
     }, [currentAccount]);
     
-    const {handleSignAndExecuteTransaction: createPostTx} = useBetterSignAndExecuteTransactionAsync({ tx: createPost});
-    const {handleSignAndExecuteTransaction: createAccountAndPostTx} = useBetterSignAndExecuteTransactionAsync({ tx: createAccountAndPost});
+    const {handleSignAndExecuteTransaction: createPostTx} = useBetterSignAndExecuteTransaction({ tx: createPost});
+    const {handleSignAndExecuteTransaction: createAccountAndPostTx} = useBetterSignAndExecuteTransaction({ tx: createAccountAndPost});
 
-    const handleCreatePost = (address: string, blobId: string, lastingTime: number, predictedTrueBp: number) => {
+    const handleCreatePost = (blobId: string, lastingTime: number, predictedTrueBp: number) => {
         if (!currentAccount) {
             console.error("Current account not found");
             return;
         }
         if (!user) {
-            createAccountAndPostTx(currentAccount.address, blobId, lastingTime, predictedTrueBp).onSuccess(() => {
+            createAccountAndPostTx({ address: currentAccount.address, blobId, lastingTime, predictedTrueBp }).onSuccess(() => {
                 console.log("Account and post created successfully");
                 refreshUser(currentAccount.address);
             }).onError((error) => {
@@ -168,7 +168,7 @@ export default function ProfilePage() {
             return;
         }
         console.log("user.id", user.id);
-        createPostTx(address, blobId, lastingTime, predictedTrueBp, user.id).onSuccess(() => {
+        createPostTx({ address: currentAccount.address, blobId, lastingTime, predictedTrueBp, accountId: user.id }).onSuccess(() => {
             console.log("Post created successfully");
             refreshUser(currentAccount.address);
         }).onError((error) => {

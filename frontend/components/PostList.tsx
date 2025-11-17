@@ -2,17 +2,21 @@ import { Post } from '@/types/display';
 import PostCard from './PostCard';
 interface PostListProps {
     posts: Post[];
-    onPostClick?: (post: Post) => void;
+    onVotePost: (postId: string, cryptoVoteData: number[]) => void;
+    onVerifyPost: (postId: string) => void;
+    onPostClick: (post: Post) => void;
 }
 
-export default function PostList({ posts, onPostClick }: PostListProps) {
+export default function PostList({ posts, onPostClick, onVotePost, onVerifyPost }: PostListProps) {
     return (
         <div className='grid grid-cols-3 gap-4'>
             {posts.map((post) => (
                 <PostCard 
-                    key={post.content} 
+                    key={post.id} 
                     post={post} 
-                    onClick={() => onPostClick?.(post)} 
+                    onVotePost={onVotePost}
+                    onClick={() => onPostClick(post)} 
+                    onVerifyPost={onVerifyPost}
                 />
             ))}
         </div>

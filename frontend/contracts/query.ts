@@ -1,7 +1,7 @@
 
 import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { networkConfig } from "./index";
-import { Seer, Post, Account, Config } from "../types/raw";
+import { Seer, Post, Account, Config, PostsTable } from "../types/raw";
 import { PostBcs, AccountBcs, SeerBcs, ConfigBcs } from "../types/bcs";
 import { SuiGraphQLClient } from '@mysten/sui/graphql';
 import {getTableContent} from './graphl';
@@ -10,6 +10,7 @@ import {getTableContent} from './graphl';
 const graphqlClient = new SuiGraphQLClient({
   url: ` https://graphql.testnet.sui.io/graphql`,
 });
+
 
 const grpcClient = new SuiGrpcClient({
   network: 'testnet',
@@ -22,16 +23,56 @@ const grpcClient = new SuiGrpcClient({
 //   posts: Record<string, string[]>;
 //   post_fees: number;
 // }
-export const getTableContentByGraphql = async (address: string): Promise<Record<string, string[]>> => {
+export const getTableContentByGraphql = async (address: string): Promise<PostsTable> => {
+  let hasNextPage = true;
+  let nextCursor: string | null = null;
+  const userPosts: PostsTable = {};
+  interface TableContentQueryResult {
+    data?: {
+        address?: {
+            dynamicFields?: {
+                pageInfo?: {
+                    hasNextPage: boolean;
+                    endCursor: string;
+                };
+                nodes?: Array<{
+                    name?: {
+                        json: string;
+                    };
+                    value?: {
+                        json: string[];
+                    };
+                }>;
+            };
+        };
+    };
+  }
+//posts: Table<address, vector<address>>
+while (hasNextPage) {
   const response = await graphqlClient.query({
     query: getTableContent,
     variables: {
-      tableId: address,
+      address: address,
+      after: nextCursor,
     },
-  });
+  }) as TableContentQueryResult;
 
-  console.log("response", response);
-  return response as unknown as Record<string, string[]>;
+  //解析
+  if (response.data?.address?.dynamicFields?.nodes) {
+    response.data.address.dynamicFields.nodes.forEach((node) => {
+      const key = node.name?.json;
+      const value = node.value?.json;
+      if (key && Array.isArray(value)) {
+        userPosts[key as string] = value as string[];
+      }
+    });
+  }
+  hasNextPage = response.data?.address?.dynamicFields?.pageInfo?.hasNextPage || false;
+  if (hasNextPage) {
+    nextCursor = response.data?.address?.dynamicFields?.pageInfo?.endCursor || null;
+  }
+}
+  return userPosts;
 };
 
 export const getSeer = async (): Promise<Seer> => {
@@ -43,11 +84,17 @@ export const getSeer = async (): Promise<Seer> => {
       ],
     },
   });
-  const seer = SeerBcs.parse(response.object?.contents?.value as Uint8Array);
-  console.log("seer-id", seer.posts.id.id);
-  const posts = await getTableContentByGraphql("0xcb3f9b7003f06c5f1a38649ef827c1eba64f22fc965e127781abf72a212d5a82");
-  console.log("posts-graphql", posts);
-  return seer as unknown as Seer;
+  const seerBcs = SeerBcs.parse(response.object?.contents?.value as Uint8Array);
+  
+  // 将 BCS 解析后的数据转换为 Seer 类型
+  const seer: Seer = {
+    id: seerBcs.id.id,
+    accounts: seerBcs.accounts,
+    posts_table_id: seerBcs.posts.id.id,
+    post_fees: Number(seerBcs.post_fees.value),
+  };
+  
+  return seer;
 };
 
 const getPostsFromSeer = async (parentId: string): Promise<Record<string, string[]>> => {
@@ -64,7 +111,6 @@ const getPostsFromSeer = async (parentId: string): Promise<Record<string, string
       ],
     },
   });
-  // console.log("post--------------------", post);
   return dynamicField;
   }));
   return dynamicFields as unknown as Record<string, string[]>;
@@ -83,7 +129,6 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
       ],
     },
   });
-console.log("response", response);
   const posts = response.objects
     .map((object) => {
       if (object.result.oneofKind === 'object') {
@@ -91,7 +136,6 @@ console.log("response", response);
       }
       return null;
     })
-    console.log("posts", posts);
   return posts as unknown as Post[];
 };
 

@@ -102,10 +102,14 @@ export interface DerivedVoteResult {
 // }
 
 export interface Seer {
-    id: {id: string};
+    id:  string;
     accounts: string[];
     posts_table_id: string;
     post_fees: number;
+}
+
+export interface PostsTable {
+    [address: string]: string[]; // address -> post_address
 }
 
 export interface Config {

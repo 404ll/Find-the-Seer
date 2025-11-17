@@ -59,32 +59,28 @@ export const getCustodianInfo = graphql(`
   }
 `)
 
-export const getTableContent = graphql(`
-  query GetTableContent($tableId: SuiAddress!, $after: String) {
-    owner(address: $tableId) {
-        dynamicFields(after: $after) {
-          pageInfo {
-            hasNextPage
-            endCursor
+export const getTableContent =graphql(`
+  query GetTableContent($address: SuiAddress!, $after: String) {
+    address(address: $address) {
+      __typename
+      dynamicFields(after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          name {
+            json
           }
-          nodes {
-            name {
-              json
-            }
-            value {
-            __typename
+          value {
             ... on MoveValue {
               json
-            }
-            ... on MoveObject {
-              contents {
-                json
-              }
             }
           }
         }
       }
     }
   }
-`)
+  `)
+  
 

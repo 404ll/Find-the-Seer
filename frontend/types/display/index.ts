@@ -1,13 +1,22 @@
 export interface Post {
+    id: string; 
     content: string;
     createdAt: string;
     lastingTime: number;
+    deadline: string; 
     trueVotesCount: number;
     falseVotesCount: number;
-    status: PostStatus;
     votecount: number;
+    status: PostStatus;
     trueFalseRatio: number;
     // authorClaimed: boolean;
+}
+
+export interface DisplaySeer {
+    id: string;
+    posts: Post[];
+    accounts: string[];
+    postFees: number;
 }
 
 export interface CreatePostForm {

@@ -1,6 +1,5 @@
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { createNetworkConfig } from "@mysten/dapp-kit";
-import { Transaction } from "@mysten/sui/transactions";
 import { getContractConfig } from "./config";
 
 type NetworkVariables = ReturnType<typeof useNetworkVariables>;
