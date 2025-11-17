@@ -30,7 +30,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       console.log("account", account);
-      const user = await accountToUser(account);
+    const user = await accountToUser(account);
       console.log("user", user);
       setUser(user);
     } catch (error) {
