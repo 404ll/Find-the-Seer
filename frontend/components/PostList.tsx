@@ -2,7 +2,7 @@ import { Post } from '@/types/display';
 import PostCard from './PostCard';
 interface PostListProps {
     posts: Post[];
-    onVotePost: (postId: string, cryptoVoteData: number[]) => void;
+    onVotePost: (postId: string, vote_choice: boolean) => void;
     onVerifyPost: (postId: string) => void;
     onPostClick: (post: Post) => void;
 }

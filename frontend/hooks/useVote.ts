@@ -7,9 +7,7 @@ import { networkConfig } from '@/contracts';
 export function useVote() {
   const currentAccount = useCurrentAccount();
   const [isEncrypting, setIsEncrypting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const vote = async (
+  const [error, setError] = useState<string | null>(null);  const vote = async (
     postId: string,
     accountId: string,
     voteChoice: boolean,
@@ -32,16 +30,14 @@ export function useVote() {
         threshold
       );
 
-      // 2. 转换为 number[]
-      const cryptoVoteData = Array.from(encryptedVote);
 
       // 3. 返回交易
-      return votePost(
-        currentAccount.address,
+      return votePost({
+        address: currentAccount.address,
         postId,
         accountId,
-        cryptoVoteData,
-      );
+        cryptoVoteData: encryptedVote,
+      });
     } catch (err: any) {
       setError(err.message);
       throw err;

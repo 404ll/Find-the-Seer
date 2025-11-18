@@ -16,9 +16,12 @@ import { ConnectButton } from "@mysten/dapp-kit";
 import { getPosts, getAccount, getSeer, getConfig } from "@/contracts/query";
 import { useEffect } from "react";
 import { useVote } from "@/hooks/useVote";
-import { useDerivedKeys } from "@/hooks/useDerivedKeys";
-import { fetchPublicKeys } from "@/utils/seal/encrypt";
-import { Transaction } from "@mysten/sui/transactions";
+import { fetchPublicKeys, sealClient } from "@/utils/seal/encrypt";
+import { fetchDerivedKeysForContract } from "@/utils/seal/decrypt";
+import { networkConfig } from "@/contracts";
+import { suiClient } from "@/contracts";
+import { useSignPersonalMessage } from "@mysten/dapp-kit";
+import { SessionKey } from '@mysten/seal';
 
 
 export default function TestPage() {
@@ -36,7 +39,6 @@ export default function TestPage() {
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-
   // createPost 参数
   const [blobId, setBlobId] = useState("");
   const [lastingTime, setLastingTime] = useState("86400"); // 1 day in seconds
@@ -50,14 +52,46 @@ export default function TestPage() {
   const [postId, setPostId] = useState("");
   const [cryptoVoteData, setCryptoVoteData] = useState<number[]>([]);
 
-  // 使用封装的 useDerivedKeys hook
-  const { 
-    derivedKeys, 
-    keyServerAddresses: settleKeyServers, 
-    isLoading: isDerivedKeysLoading,
-    error: derivedKeysError,
-    fetchDerivedKeys 
-  } = useDerivedKeys();
+  // decryptAndSettleCryptoVote 参数
+  const [derivedKeys, setDerivedKeys] = useState<number[][]>([]);
+  const [settleKeyServers, setSettleKeyServers] = useState<string[]>([]);
+  const { mutate: signPersonalMessage } = useSignPersonalMessage();
+  
+  const getDerivedKeys = async () => {
+    if (!currentAccount) return;
+  
+    // 1. 创建 SessionKey
+    const sessionKey = await SessionKey.create({
+      address: currentAccount.address,
+      packageId: networkConfig.testnet.variables.Package,
+      ttlMin: 10,
+      suiClient: suiClient,
+    });
+
+    signPersonalMessage(
+      {
+        message: sessionKey.getPersonalMessage(),
+      },
+      {
+        onSuccess: async (result: { signature: string }) => {
+          sessionKey.setPersonalMessageSignature(result.signature);
+          console.log("signature", result);
+          const {derivedKeys, keyServerAddresses} = await fetchDerivedKeysForContract(
+            "0x21ed41cc0a44fe77713ecf398ceed2dcb4e54bec94353884f68598b11f35464e",
+            suiClient,
+            sealClient,
+            sessionKey,
+          );
+          
+          setDerivedKeys(derivedKeys);
+          setSettleKeyServers(keyServerAddresses);
+        },
+        onError: (error) => {
+          setError(`签名失败: ${error.message}`);
+        },
+      }
+    );
+  }
 
   useEffect(() => {
     if (keyServers.length > 0) {
@@ -72,12 +106,9 @@ export default function TestPage() {
   }, [keyServers]);
 
 
-  // 如果需要自动获取 derived keys，可以在这里调用 fetchDerivedKeys
-  // useEffect(() => {
-  //   if (currentAccount && postId) {
-  //     fetchDerivedKeys(postId);
-  //   }
-  // }, [currentAccount, postId, fetchDerivedKeys]);
+  useEffect(() => {
+      getDerivedKeys();
+  }, [currentAccount]);
 
   useEffect(() => {
     if (currentAccount) {
@@ -97,9 +128,11 @@ useEffect(() => {
   getPosts(["0x21ed41cc0a44fe77713ecf398ceed2dcb4e54bec94353884f68598b11f35464e"])
 }, [postId]);
 
-  const handleExecute = (tx: any) => {
+  const handleExecute = async (txPromise: Promise<any>) => {
     try {
       setError("");
+      setResult("构建交易中...");
+      const tx = await txPromise;
       setResult("等待签名...");
 
       signAndExecuteTransaction(
@@ -128,27 +161,16 @@ useEffect(() => {
       setError("请先连接钱包");
       return;
     }
-    if (!accountId) {
-      setError("请输入 Account ID");
-      return;
-    }
-    const tx = createPost({
-      address: currentAccount.address,
-      blobId: blobId || "test-blob-id",
-      lastingTime: Number(lastingTime),
-      predictedTrueBp: Number(predictedTrueBp),
-      accountId: accountId
-    });
-    handleExecute(tx);
+    handleExecute(createPost(currentAccount.address, blobId || "test-blob-id", Number(lastingTime), Number(predictedTrueBp),accountId));
   };
 
-const handleSetPublicKeys = () => {
+const handleSetPublicKeys = async () => {
   if (!currentAccount) {
     setError("请先连接钱包");
     return;
   }
-  const tx = setPublicKeys1({ publicKeys });
-  handleExecute(tx);
+  const tx = await setPublicKeys1(publicKeys);
+  handleExecute(Promise.resolve(tx));
 };
 
   const handleCreatePost = () => {
@@ -156,13 +178,14 @@ const handleSetPublicKeys = () => {
       setError("请先连接钱包");
       return;
     }
-    const tx = createAccountAndPost({
-      address: currentAccount.address,
-      blobId: blobId || "test-blob-id",
-      lastingTime: Number(lastingTime),
-      predictedTrueBp: Number(predictedTrueBp)
-    });
-    handleExecute(tx);
+    handleExecute(
+      createAccountAndPost(
+        currentAccount.address,
+        blobId || "test-blob-id",
+        Number(lastingTime),
+        Number(predictedTrueBp)
+      )
+    );
   };
 
   const handleVotePost = async () => {
@@ -184,31 +207,26 @@ const handleSetPublicKeys = () => {
       );
 
       // 执行交易
-      handleExecute(tx as Transaction);
+      handleExecute(Promise.resolve(tx));
     } catch (err: any) {
       setError(err.message);
     }
   };
 
 
-  const handleCreateAccountAndVotePost = () => {
+  const handleCreateAccountAndVotePost = async () => {
     if (!currentAccount) {
       setError("请先连接钱包");
       return;
     }
     if (!postId) {
-      setError("请输入 Post ID");
+      setError("请输入 Post ID 和 Account ID");
       return;
     }
-    const tx = createAccountAndVotePost({
-      address: currentAccount.address,
-      postId: postId,
-      cryptoVoteData: cryptoVoteData
-    });
-    handleExecute(tx);
+    handleExecute(createAccountAndVotePost(currentAccount.address, postId, cryptoVoteData));
   };
 
-  const handleDecryptAndSettle = async () => {
+  const handleDecryptAndSettle = () => {
     if (!currentAccount) {
       setError("请先连接钱包");
       return;
@@ -217,24 +235,15 @@ const handleSetPublicKeys = () => {
       setError("请输入 Post ID");
       return;
     }
-    
-    try {
-      // 先获取 derived keys
-      const { derivedKeys: fetchedDerivedKeys, keyServerAddresses: fetchedKeyServers } = 
-        await fetchDerivedKeys(postId);
-      
-      // 执行解密并结算
-      const tx = decryptAndSettleCryptoVote({
-        address: currentAccount.address,
-        postId: postId,
-        derivedKeys: fetchedDerivedKeys,
-        keyServers: fetchedKeyServers
-      });
-      handleExecute(tx);
-    } catch (error) {
-      console.error("获取派生密钥失败:", error);
-      setError(derivedKeysError || "获取派生密钥失败");
-    }
+    // console.log("derivedKeys", derivedKeys);
+    handleExecute(
+      decryptAndSettleCryptoVote(
+        currentAccount.address,
+        postId,
+        derivedKeys,
+        settleKeyServers
+      )
+    );
   };
 
   const handleClaimRewards = () => {
@@ -246,12 +255,7 @@ const handleSetPublicKeys = () => {
       setError("请输入 Post ID 和 Account ID");
       return;
     }
-    const tx = claimVoteRewards({
-      address: currentAccount.address,
-      postId: postId,
-      accountId: accountId
-    });
-    handleExecute(tx);
+    handleExecute(claimVoteRewards(currentAccount.address, postId, accountId));
   };
 
   const handleClaimRewardsForAuthor = () => {
@@ -260,15 +264,12 @@ const handleSetPublicKeys = () => {
       return;
     }
     if (!postId || !accountId) {
-      setError("请输入 Post ID 和 Account ID");
+      setError("请输入 Post ID");
       return;
     }
-    const tx = claimVoteRewardsForAuthor({
-      address: currentAccount.address,
-      postId: postId,
-      accountId: accountId
-    });
-    handleExecute(tx);
+    handleExecute(
+      claimVoteRewardsForAuthor(currentAccount.address, postId, accountId)
+    );
   };
 
   return (

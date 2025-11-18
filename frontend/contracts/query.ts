@@ -1,21 +1,15 @@
 
-import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { networkConfig } from "./index";
 import { Seer, Post, Account, Config, PostsTable } from "../types/raw";
 import { PostBcs, AccountBcs, SeerBcs, ConfigBcs } from "../types/bcs";
 import { SuiGraphQLClient } from '@mysten/sui/graphql';
 import {getTableContent} from './graphl';
-
+import { suiGrpcClient } from "./index";
 
 const graphqlClient = new SuiGraphQLClient({
   url: ` https://graphql.testnet.sui.io/graphql`,
 });
 
-
-const grpcClient = new SuiGrpcClient({
-  network: 'testnet',
-  baseUrl: 'https://fullnode.testnet.sui.io:443',
-});
 
 // export interface Seer {
 //   id: {id: string};
@@ -76,7 +70,7 @@ while (hasNextPage) {
 };
 
 export const getSeer = async (): Promise<Seer> => {
-  const { response } = await grpcClient.ledgerService.getObject({
+  const { response } = await suiGrpcClient.ledgerService.getObject({
     objectId: networkConfig.testnet.variables.Seer,
     readMask: {
       paths: [
@@ -98,11 +92,11 @@ export const getSeer = async (): Promise<Seer> => {
 };
 
 const getPostsFromSeer = async (parentId: string): Promise<Record<string, string[]>> => {
-  const { response } = await grpcClient.stateService.listDynamicFields({
+  const { response } = await suiGrpcClient.stateService.listDynamicFields({
     parent: parentId,
   });
   const dynamicFields = await Promise.all(response.dynamicFields.map(async (field) => {
-   const {response: dynamicField} = await grpcClient.ledgerService.getObject({
+   const {response: dynamicField} = await suiGrpcClient.ledgerService.getObject({
     objectId: field.fieldId,
     readMask: {
       paths: [
@@ -120,7 +114,7 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
   const requests = postIds.map((postId) => ({
     objectId: postId,
   }));
-  const { response } = await grpcClient.ledgerService.batchGetObjects({
+  const { response } = await suiGrpcClient.ledgerService.batchGetObjects({
     requests,
     readMask: {
       paths: [
@@ -140,7 +134,7 @@ export const getPosts = async (postIds: string[]): Promise<Post[]> => {
 };
 
 export const getAccount = async (accountId: string): Promise<Account | null> => {
-  const { response } = await grpcClient.stateService.listOwnedObjects({
+  const { response } = await suiGrpcClient.stateService.listOwnedObjects({
     owner: accountId,
     objectType: `${networkConfig.testnet.variables.Package}::seer::Account`,
     readMask: {
@@ -160,7 +154,7 @@ export const getAccount = async (accountId: string): Promise<Account | null> => 
 };
 
 export const getConfig = async (): Promise<Config> => {
-  const { response } = await grpcClient.ledgerService.getObject({
+  const { response } = await suiGrpcClient.ledgerService.getObject({
     objectId: networkConfig.testnet.variables.Config,
     readMask: {
       paths: [

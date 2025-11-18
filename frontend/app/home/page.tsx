@@ -9,8 +9,11 @@ import { useUser } from '@/context/UserContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useBetterSignAndExecuteTransaction } from '@/hooks/useBetterTx';
 import { useDerivedKeys } from '@/hooks/useDerivedKeys';
+// import {}
 import { createAccountAndVotePost, decryptAndSettleCryptoVote, votePost } from '@/contracts/call';
 import { useSeerData } from '@/hooks/useSeerData';
+import { encryptVote } from '@/utils/seal/encrypt';
+import { networkConfig } from '@/contracts/index';
 
 
 const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
@@ -87,22 +90,24 @@ export default function HomePage() {
   };
 
 
-  const handleVotePost = (postId: string, cryptoVoteData: number[]) => {
+  const handleVotePost = async (postId: string, vote_choice: boolean) => {
     if (!currentAccount) {
       console.error("Current account not found");
       return;
     } 
-    // 如果用户还没有账户，创建账户并投票
+
+    const cryptoVoteData = await encryptVote(vote_choice, currentAccount.address, networkConfig.testnet.variables.Package, postId);
+    console.log("encryptedCryptoVoteData", cryptoVoteData);
     if(!user) {
       createAccountAndVotePostTx({ address: currentAccount.address, postId, cryptoVoteData }).onSuccess(() => {
-        console.log("Vote post successfully");
+        console.log("Vote post successfully");  
         triggerDataRefresh(currentAccount.address);
       }).onError((error) => {
         console.error(error);
       }).execute();
       return;
     }
-    // 用户已有账户，使用 user.id 作为 accountId
+
     votePostTx({ address: currentAccount.address, postId, accountId: user.id, cryptoVoteData }).onSuccess(() => {
       console.log("Vote post successfully");
       triggerDataRefresh(currentAccount.address);
@@ -121,8 +126,7 @@ export default function HomePage() {
       // 获取 derived keys（返回 Promise，可以直接 await）
       const { derivedKeys: fetchedDerivedKeys, keyServerAddresses: fetchedKeyServers } = 
         await fetchDerivedKeys(postId);
-      
-      // 执行验证
+      console.log(fetchedDerivedKeys,fetchedKeyServers);
       verifyPostTx({ 
         address: currentAccount.address, 
         postId, 

@@ -46,7 +46,7 @@ export async function encryptVote(
   packageId: string,
   postId: string,
   threshold: number = 2
-): Promise<Uint8Array> {
+): Promise<number[]> {
   const message = new Uint8Array([voteChoice ? 0x01 : 0x00]);
 
   const aad = fromHex(userAddress);
@@ -63,7 +63,7 @@ export async function encryptVote(
   
   const encryptedObject = EncryptedObject.parse(encryptedObjectBytes);
   console.log("encryptedObject", encryptedObject);
-  return encryptedObjectBytes;
+  return Array.from(encryptedObjectBytes);
 }
 
 export const fetchPublicKeys = async (keyServers: string[]): Promise<number[][]> => {

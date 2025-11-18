@@ -1,6 +1,7 @@
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { createNetworkConfig } from "@mysten/dapp-kit";
 import { getContractConfig } from "./config";
+import { SuiGrpcClient } from "@mysten/sui/grpc";
 
 type NetworkVariables = ReturnType<typeof useNetworkVariables>;
 
@@ -29,7 +30,10 @@ const { networkConfig, useNetworkVariables } = createNetworkConfig({
 
 // 创建全局 SuiClient 实例
 const suiClient = new SuiClient({ url: networkConfig[network].url });
-
-export { getNetworkVariables, networkConfig, network, suiClient,useNetworkVariables };
+const suiGrpcClient = new SuiGrpcClient({
+    network: 'testnet',
+    baseUrl: 'https://fullnode.testnet.sui.io:443',
+  });
+export { getNetworkVariables, networkConfig, network, suiClient,useNetworkVariables, suiGrpcClient };
 export type { NetworkVariables };
 

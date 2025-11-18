@@ -2,7 +2,7 @@ import { Post, PostStatus } from '@/types/display';
 
 interface PostCardProps {
     post: Post;
-    onVotePost: (postId: string, cryptoVoteData: number[]) => void;
+    onVotePost: (postId: string, vote_choice: boolean) => void;
     onVerifyPost: (postId: string) => void;
     onClick?: () => void;
 }
@@ -50,9 +50,9 @@ export default function PostCard({ post, onVotePost, onClick,onVerifyPost }: Pos
                 {/* 截止时间 */} 
                 {post.status === 'Active' && <div className='text-white bg-[#BDBDBD] rounded-[12px] p-2 text-base font-cbyg items-center flex'>Deadline: <span className='ml-2'>{post.deadline}</span></div>}
                 <div className='flex flex-row justify-end gap-4' onClick={(e) => e.stopPropagation()}>
-                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, [1])}>True</button>
-                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, [0])}>False</button>
-                    {post.status === PostStatus.Verify && <button className='bg-[#679533] text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={()=>onVerifyPost(post.id)}>Verify</button>}
+                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, true)}>True</button>
+                    <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, false)}>False</button>
+                    { <button className='bg-[#679533] text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={()=>onVerifyPost(post.id)}>Verify</button>}
                 </div>
             </div>
         </div>

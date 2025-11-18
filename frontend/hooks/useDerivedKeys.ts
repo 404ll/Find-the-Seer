@@ -127,10 +127,6 @@ export function useDerivedKeys(options?: {
     setIsLoading(false);
   }, []);
 
-  // 如果启用了自动获取且提供了 postId，则自动获取
-  // 注意：这需要 useEffect，但为了保持简单，暂时不实现
-  // 如果需要自动获取功能，应该在组件层面处理
-
   return {
     derivedKeys,
     keyServerAddresses,
