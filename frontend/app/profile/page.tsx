@@ -14,6 +14,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useUser } from "@/context/UserContext";
 import { createAccountAndPost, createPost } from "@/contracts/call";
 import { useBetterSignAndExecuteTransaction } from "@/hooks/useBetterTx";
+import { toast } from "sonner";
 
 
 
@@ -43,8 +44,10 @@ export default function ProfilePage() {
             createAccountAndPostTx({ address: currentAccount.address, blobId, lastingTime, predictedTrueBp }).onSuccess(() => {
                 console.log("Account and post created successfully");
                 refreshUser(currentAccount.address);
+                toast.success("Account and post created successfully");
             }).onError((error) => {
                 console.error(error);
+                toast.error("Account and post creation failed");
             }).execute();
             return;
         }
@@ -52,8 +55,10 @@ export default function ProfilePage() {
         createPostTx({ address: currentAccount.address, blobId, lastingTime, predictedTrueBp, accountId: user.id }).onSuccess(() => {
             console.log("Post created successfully");
             refreshUser(currentAccount.address);
+            toast.success("Post created successfully");
         }).onError((error) => {
             console.error(error);
+            toast.error("Post creation failed");
         }).execute();
     };
 

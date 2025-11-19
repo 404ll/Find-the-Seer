@@ -14,6 +14,7 @@ import { createAccountAndVotePost, decryptAndSettleCryptoVote, votePost } from '
 import { useSeerData } from '@/hooks/useSeerData';
 import { encryptVote } from '@/utils/seal/encrypt';
 import { networkConfig } from '@/contracts/index';
+import { toast } from 'sonner';
 
 
 const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
@@ -110,9 +111,11 @@ export default function HomePage() {
 
     votePostTx({ address: currentAccount.address, postId, accountId: user.id, cryptoVoteData }).onSuccess(() => {
       console.log("Vote post successfully");
+      toast.success("Vote post successfully");
       triggerDataRefresh(currentAccount.address);
     }).onError((error) => {
       console.error(error);
+      toast.error("Vote post failed");
     }).execute();
   };
 
