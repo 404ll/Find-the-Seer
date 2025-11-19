@@ -14,9 +14,9 @@ export default function ClosePostModal({
     if (!isOpen) return null;
 
     // 计算总票数和百分比
-    const totalVotes = post.trueVotesCount + post.falseVotesCount;
-    const truePercentage = totalVotes > 0 ? Math.round((post.trueVotesCount / totalVotes) * 100) : 0;
-    const falsePercentage = totalVotes > 0 ? Math.round((post.falseVotesCount / totalVotes) * 100) : 0;
+    // console.log(post.votecount, post.trueVotesCount, post.falseVotesCount);
+    const truePercentage = post.votecount > 0 ? Math.round((post.trueVotesCount / post.votecount) * 100) : 0;
+    const falsePercentage = post.votecount > 0 ? Math.round((post.falseVotesCount / post.votecount) * 100) : 0;
 
     return (
         <div 
