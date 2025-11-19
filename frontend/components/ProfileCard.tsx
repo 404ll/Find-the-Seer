@@ -13,6 +13,7 @@ export default function ProfileCard({ user }: ProfileCardProps) {
     const totalPosts = user?.ownedPosts?.length ?? 0;
     const voteProfit = user?.voteProfit ?? 0;
     const authorProfit = user?.authorProfit ?? 0;
+    const influence = user?.influence ?? 0;
 
     return (
         <Card className="bg-white rounded-[12px] p-4 flex flex-col">
@@ -31,7 +32,7 @@ export default function ProfileCard({ user }: ProfileCardProps) {
                 {/* <p>address: {walletAddress}</p> */}
                 <div className="flex flex-row items-center gap-2">
                     {/* <Image src="/icon/influence.svg" alt="Wallet Address" width={30} height={30} /> */}
-                    <span>Influence: <u>123</u></span>
+                    <span>Influence: <u>{influence}</u></span>
                 </div>
                 <div className="flex flex-row items-center gap-2">
                     {/* <Image src="/icon/vote.svg" alt="Wallet Address" width={30} height={30} /> */}

@@ -37,8 +37,12 @@ export default function PostCard({ post, onVotePost, onClick,onVerifyPost }: Pos
         return plainText.length > 0 ? (plainText.slice(0, 50) + (plainText.length > 50 ? "..." : "")) : "No title";
     }
 
+    if (post.status === PostStatus.Closed) {
+        return null;
+    }
+
     return (
-        <div 
+        <div
             className='bg-white rounded-[12px] p-4 flex flex-col gap-4 cursor-pointer hover:scale-105 transition-transform duration-300' 
             onClick={handleCardClick}
         >
@@ -46,15 +50,17 @@ export default function PostCard({ post, onVotePost, onClick,onVerifyPost }: Pos
             <h1 className='text-black text-2xl font-cbyg text-center'>{getTitle(post.content)}</h1>
 
             <hr className='border-black border-1' />
-            <div className={`flex flex-row items-center gap-4 text-white text-xl font-cbyg ${post.status === PostStatus.Active ? 'justify-between' : 'justify-end'}`}>    
+           
+            <div className={`flex flex-row items-center gap-2 text-white text-xl font-cbyg ${post.status === PostStatus.Active ? 'justify-between' : 'justify-end'}`}>    
                 {/* 截止时间 */} 
-                {post.status === 'Active' && <div className='text-white bg-[#BDBDBD] rounded-[12px] p-2 text-base font-cbyg items-center flex'>Deadline: <span className='ml-2'>{post.deadline}</span></div>}
-                <div className='flex flex-row justify-end gap-4' onClick={(e) => e.stopPropagation()}>
+                {post.status === PostStatus.Active && <div className='text-white bg-[#BDBDBD] rounded-[12px] p-2 text-base font-cbyg items-center flex'>Deadline: <span className='ml-2'>{post.deadline}</span></div>}
+                <div className='flex flex-row justify-end gap-2' onClick={(e) => e.stopPropagation()}>
                     <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, true)}>True</button>
                     <button className='bg-black text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={() => onVotePost(post.id, false)}>False</button>
-                    { <button className='bg-[#679533] text-white rounded-[12px] p-2 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={()=>onVerifyPost(post.id)}>Verify</button>}
+                    {post.status === PostStatus.Verify && <button className='bg-[#679533] text-white rounded-[12px] px-4 font-cbyg text-xl hover:scale-105 transition-all duration-300' onClick={()=>onVerifyPost(post.id)}>Verify</button>}
                 </div>
             </div>
+           
         </div>
     );
 }

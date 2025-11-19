@@ -42,6 +42,7 @@ export enum PostStatus {
 
 export interface User {
     id: string;
+    influence: number;
     voteProfit: number;
     authorProfit: number;
     ownedPosts: Post[];

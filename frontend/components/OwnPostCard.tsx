@@ -35,7 +35,7 @@ export default function OwnPostCard({ post, onClick }: OwnPostCardProps) {
             onClick={onClick}
         >
             <div className='flex flex-row justify-between items-center gap-4 text-white text-2xl font-cbyg'>
-                <div>{getTitle(post.content)}</div>
+                <div>{post.id.slice(0, 12) + "..."}</div>
                 {post.status === 'Active' ? <div className="bg-[#679533] rounded-[8px] p-2 text-black text-xl font-cbyg justify-end">Active</div> : <div className="bg-[#BDBDBD] rounded-[8px] p-2 text-white text-xl font-cbyg justify-center">Closed</div>}
             </div>
         </div>

@@ -7,7 +7,6 @@ interface PostDetailProps {
 
 export default function PostDetail({ post, onClose }: PostDetailProps) {
     // 计算总票数
-    const totalVotes = post.trueVotesCount + post.falseVotesCount;
     const truthRatioTrue = post.trueRatio;
     const truthRatioFalse = 10 - truthRatioTrue;
     const truthRatioDisplay = `${truthRatioTrue} / ${truthRatioFalse}`;
@@ -50,13 +49,13 @@ export default function PostDetail({ post, onClose }: PostDetailProps) {
                     Created At : <span className="ml-2">{post.createdAt}</span>
                 </div>
                 <div className="text-white text-xl font-cbyg">
-                    Deadline : <span className="ml-2">{post.deadline}</span>
+                  Verify  Deadline : <span className="ml-2">{post.deadline}</span>
                 </div>
                 <div className="text-white text-xl font-cbyg">
-                    Lasting Time : <span className="ml-2">{Math.round(post.lastingTime)} hours</span>
+                   Lasting Time : <span className="ml-2">{Math.round(post.lastingTime)} hours</span>
                 </div>
                 <div className="text-white text-xl font-cbyg">
-                    Total Votes : <span className="ml-2">{totalVotes}</span>
+                    Total Votes : <span className="ml-2">{post.votecount}</span>
                 </div>
                 <div className="text-white text-xl font-cbyg">
                     Truth Ratio : <span className="ml-2">{truthRatioDisplay}</span>

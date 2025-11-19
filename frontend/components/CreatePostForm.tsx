@@ -160,7 +160,7 @@ export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProp
             {uploadError}
           </div>
         )}
-        <div className="flex justify-end">
+        <div className="flex justify-end flex-col gap-2">
           <button
             onClick={handleCreate}
             disabled={isUploading}
@@ -168,6 +168,7 @@ export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProp
           >
             {isUploading ? "uploading..." : "Create"}
           </button>
+          <p className="text-sm font-cbyg text-gray-600">One Epoch is 24 hours</p>
         </div>
       </Card>
     </div>

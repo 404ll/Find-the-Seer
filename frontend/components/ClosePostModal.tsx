@@ -46,10 +46,7 @@ export default function ClosePostModal({
                         Influence : <span className="ml-2">{post.votecount}</span>
                     </div>
                     <div className="text-white text-xl font-cbyg">
-                        Truth Ratio : <span className="ml-2">{post.trueFalseRatio}</span>
-                    </div>
-                    <div className="text-white text-xl font-cbyg">
-                       Your Reward : <span className="ml-2">先硬编码</span>
+                        Truth Ratio : <span className="ml-2">{post.trueRatio} / {10 - post.trueRatio}</span>
                     </div>
                     
                     {/* TRUE/FALSE 进度条 */}

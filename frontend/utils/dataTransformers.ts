@@ -70,13 +70,15 @@ export async function accountToUser(account: Account): Promise<User> {
     Promise.all(claimedPostsPromises),
   ]);
 
+  const influence = ownedPosts.reduce((acc, post) => acc + post.votecount, 0);
   return {
     id: account.id.id,
+    influence,
     voteProfit: account.vote_profit,
     authorProfit: account.author_profit,
-    ownedPosts,
-    votedPosts,
-    claimedPosts,
+    ownedPosts: ownedPosts,
+    votedPosts: votedPosts,
+    claimedPosts: claimedPosts,
   };
 }
 
@@ -87,18 +89,10 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
   // 计算 true/false votes
   const trueVotesCount = post.derived_vote_result?.true_votes_count || 0;
   const falseVotesCount = post.derived_vote_result?.false_votes_count || 0;
-  const totalVotes = trueVotesCount + falseVotesCount;
-
   // 计算 true/false ratio (1-9 范围)
   const trueRatio = Number(post.predicted_true_bp / 1000); //0-10范围
 // 转换 status
-  // status: 0 = Active, 1 = Closed, 2 = Verify 
-  let status: PostStatus = PostStatus.Active;
-  if (post.status === 1) {
-    status = PostStatus.Closed;
-  } else if (post.status === 2) {
-    status = PostStatus.Verify;
-  }
+
 
   // 转换时间戳为日期字符串
   let createdAt: string;
@@ -164,7 +158,7 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
 
   // 计算 deadline：createdAt + lastingTime
   const lasting_time_num = Number(post.lasting_time);
-  const deadlineDate = new Date(createdDate.getTime() + lasting_time_num);
+  const deadlineDate = new Date(createdDate.getTime() + lasting_time_num - 4*60*60*1000);
   const deadline = deadlineDate.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -175,7 +169,35 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
     hour12: false
   });
 
+    // status: 0 = Active, 1 = Closed, 2 = Verify 
+    let status: PostStatus = PostStatus.Closed;
+ 
+    if (post.status === 1 || deadlineDate < new Date(Date.now() + 4*60*60*1000)) {
+      status = PostStatus.Closed;
+    } else if (post.status === 2 || deadlineDate < new Date(Date.now())) {
+      status = PostStatus.Verify;//截止时间前4小时，需要验证
+    }
+    else if (post.status === 0) {
+      status = PostStatus.Active;
+     }
 
+
+    //关闭时，不从walrus上读取
+  if (status === PostStatus.Closed) {
+    // console.log("Closed post", post.id.id,post.blob_id);
+    return {
+      id: post.id.id, // 添加 Post ID
+      content: "",
+      createdAt,
+      lastingTime: Number(post.lasting_time)/3600000,
+      deadline,
+      trueVotesCount,
+      falseVotesCount,
+      status,
+      votecount: post.total_votes_count,
+      trueRatio
+    }
+  }
   const content = await getPostContentWithCache(post.blob_id);
   // const content =await readUserPostContent(post.blob_id);
   return {
@@ -187,7 +209,7 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
     trueVotesCount,
     falseVotesCount,
     status,
-    votecount: totalVotes,
+    votecount: post.total_votes_count,
     trueRatio
   };
 }
