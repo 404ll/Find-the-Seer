@@ -9,7 +9,7 @@ module seer::utils{
     public fun to_b36(addr: address): String {
         let source = address::to_bytes(addr);
         let size = 2 * vector::length(&source);
-        let b36copy = BASE36;d
+        let b36copy = BASE36;
         let base = vector::length(&b36copy);
         let mut encoding = vector::tabulate!(size, |_| 0);
         let mut high = size - 1;
