@@ -19,7 +19,7 @@ async function downloadBlob(
     try {
       console.log(`[Walrus] 📥 下载 blobId: ${blobId} (尝试 ${attempt}/${maxRetries})`);
       
-      const client = createWalrusClient();
+      const client = await createWalrusClient();
       const blob = await client.walrus.getBlob({ blobId });
       
       const files = await blob.files();

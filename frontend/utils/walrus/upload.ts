@@ -118,7 +118,7 @@ export async function uploadPostContent(
     try {
       console.log(`[Walrus] 开始上传 (尝试 ${attempt}/${maxRetries})...`);
       
-      const client = createWalrusClient();
+      const client = await createWalrusClient();
       const sponsorSigner = getSponsorKeypair();
 
       // 使用 Upload Relay 上传（只需上传一次，relay 会处理与存储节点的通信）

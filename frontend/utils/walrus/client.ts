@@ -1,8 +1,10 @@
 import { SuiClient } from '@mysten/sui/client';
-import { walrus } from '@mysten/walrus';
 import { getFullnodeUrl } from '@mysten/sui/client';
 
-export function createWalrusClient() {
+export async function createWalrusClient() {
+  // 使用动态导入确保 walrus 只在客户端运行时加载
+  const { walrus } = await import('@mysten/walrus');
+  
   const client = new SuiClient({
     url: getFullnodeUrl('testnet'),
     network: 'testnet',
