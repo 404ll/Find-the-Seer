@@ -267,7 +267,7 @@ public fun create_post(
     coin::put(&mut seer.post_fees, coin);
     let crypto_vote_result = CryptoVoteResult {
         key_servers: config.key_servers,
-        public_keys: config.publickeys,
+        public_keys: config.publickeys,d
         threshold: config.threshold,
         encrypted_votes: vector::empty<EncryptedObject>(),
     };
