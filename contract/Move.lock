@@ -50,3 +50,19 @@ source = { local = "seal" }
 dependencies = [
   { id = "Sui", name = "Sui" },
 ]
+<<<<<<< HEAD
+=======
+
+[move.toolchain-version]
+compiler-version = "1.52.1"
+edition = "2024.beta"
+flavor = "sui"
+
+[env]
+
+[env.testnet]
+chain-id = "4c78adac"
+original-published-id = "0x4997fed4d0d65358dbac7f1491156f976794c0227b35b02c9ce1554705cd9e4d"
+latest-published-id = "0x4997fed4d0d65358dbac7f1491156f976794c0227b35b02c9ce1554705cd9e4d"
+published-version = "1"
+>>>>>>> aed2e41da910c087b3ef9616e5fc98aea7bbfbd1

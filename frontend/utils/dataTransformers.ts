@@ -171,16 +171,15 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
 
     // status: 0 = Active, 1 = Closed, 2 = Verify 
     let status: PostStatus = PostStatus.Closed;
- 
-    if (post.status === 1 || deadlineDate < new Date(Date.now() + 4*60*60*1000)) {
+  
+    if (post.status === 1 || Number(deadlineDate) < (Date.now() + 4*60*60*1000)) {
       status = PostStatus.Closed;
-    } else if (post.status === 2 || deadlineDate < new Date(Date.now())) {
+    } else if (post.status === 2 || Number(deadlineDate) < Date.now()) {
       status = PostStatus.Verify;//截止时间前4小时，需要验证
     }
     else if (post.status === 0) {
       status = PostStatus.Active;
      }
-
 
     //关闭时，不从walrus上读取
   if (status === PostStatus.Closed) {
@@ -198,8 +197,10 @@ export async function rawPostToDisplayPost(post: RawPost): Promise<DisplayPost> 
       trueRatio
     }
   }
+    console.log("deadline", deadline, Number(deadlineDate),post.blob_id);
   const content = await getPostContentWithCache(post.blob_id);
   // const content =await readUserPostContent(post.blob_id);
+
   return {
     id: post.id.id, // 添加 Post ID
     content: content,
