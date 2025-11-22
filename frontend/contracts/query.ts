@@ -1,4 +1,3 @@
-
 import { networkConfig } from "./index";
 import { Seer, Post, Account, Config, PostsTable } from "../types/raw";
 import { PostBcs, AccountBcs, SeerBcs, ConfigBcs } from "../types/bcs";
@@ -12,7 +11,7 @@ const graphqlClient = new SuiGraphQLClient({
 
 
 // export interface Seer {
-//   id: {id: string};
+//   id: {id: strisng};
 //   accounts: string[];
 //   posts: Record<string, string[]>;
 //   post_fees: number;

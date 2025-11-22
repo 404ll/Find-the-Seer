@@ -21,19 +21,13 @@ const ITEMS_PER_PAGE = 9; // 每页显示6个（3列x2行）
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const { user, isLoading, error, refreshUser } = useUser();
+  const { user, refreshUser } = useUser();
   const currentAccount = useCurrentAccount();
   const { 
-    derivedKeys, 
-    keyServerAddresses: settleKeyServers, 
-    isLoading: isDerivedKeysLoading,
-    error: derivedKeysError,
     fetchDerivedKeys 
   } = useDerivedKeys();
   const { 
     seer, 
-    isLoading: isSeerLoading, 
-    error: seerError, 
     refreshSeerAfterTx 
   } = useSeerData();
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);

@@ -23,7 +23,7 @@ export default function ProfilePage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreatePostFormOpen, setIsCreatePostFormOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-    const { user, isLoading, error, refreshUser } = useUser();
+    const { user, refreshUser } = useUser();
     
     // 当 currentAccount 变化时，自动获取账户信息
     useEffect(() => {

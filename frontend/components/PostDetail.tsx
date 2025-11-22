@@ -1,4 +1,4 @@
-import { Post, PostStatus } from "@/types/display";
+import { Post } from "@/types/display";
 import { parseMarkdown } from "@/utils/markdownParse";
 interface PostDetailProps {
     post: Post;

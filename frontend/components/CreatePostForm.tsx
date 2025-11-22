@@ -20,7 +20,7 @@ export default function CreatePostForm({ onClose, onCreate }: CreatePostFormProp
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const falseRatio = 10 - trueRatio;
-  const [blobId, setBlobId] = useState<string | null>(null);
+  const [, setBlobId] = useState<string | null>(null);
   const currentAccount = useCurrentAccount();
   const handleEpochChange = (delta: number) => {
     setEpoch(prev => Math.max(1, prev + delta));

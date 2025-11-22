@@ -9,38 +9,6 @@ interface MDEditorProps {
 export default function MDEditor({ value, onChange }: MDEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
 
-  const parseMarkdown = (md: string) => {
-    let html = md;
-    // 标题
-    html = html.replace(
-      /^### (.*?)$/gm,
-      '<h3 className="text-lg font-bold">$1</h3>'
-    );
-    html = html.replace(
-      /^## (.*?)$/gm,
-      '<h2 className="text-xl font-bold">$1</h2>'
-    );
-    html = html.replace(
-      /^# (.*?)$/gm,
-      '<h1 className="text-2xl font-bold">$1</h1>'
-    );
-    // 粗体
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    // 斜体
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    // 代码块
-    html = html.replace(
-      /`(.*?)`/g,
-      '<code className="bg-gray-100 px-2 py-1 rounded">$1</code>'
-    );
-    // 换行
-    html = html
-      .split("\n")
-      .map((line, idx) => `<p key="${idx}">${line}</p>`)
-      .join("");
-    return html;
-  };
-
   return (
     <div className="w-full flex flex-col gap-3">
       <div className="flex gap-2 items-center justify-between">

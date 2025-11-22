@@ -5,28 +5,6 @@ interface OwnPostCardProps {
     onClick?: () => void;
 }
 
-
-const getTitle = (content: string) => {
-    // 查找第一个标题（以 # 开头的行）
-    const lines = content.split('\n');
-    for (const line of lines) {
-        const trimmedLine = line.trim();
-        // 匹配 #、##、### 等标题
-        if (trimmedLine.startsWith('# ')) {
-            return trimmedLine.replace(/^#\s+/, '');
-        }
-        if (trimmedLine.startsWith('## ')) {
-            return trimmedLine.replace(/^##\s+/, '');
-        }
-        if (trimmedLine.startsWith('### ')) {
-            return trimmedLine.replace(/^###\s+/, '');
-        }
-    }
-    // 如果没有找到标题，返回前50个字符作为预览
-    const plainText = content.replace(/#+\s/g, "").replace(/[*_`[\]()]/g, "").trim();
-    return plainText.length > 0 ? (plainText.slice(0, 25) + (plainText.length > 25 ? "..." : "")) : "No title";
-}
-
 export default function OwnPostCard({ post, onClick }: OwnPostCardProps) {
 
     return (

@@ -1,17 +1,15 @@
 "use client";
 
-import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
+import { ConnectButton } from "@mysten/dapp-kit";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import Image from "next/image";
 export default function Navbar() {  
     const pathname = usePathname();
   const router = useRouter();
   const isHome = pathname === "/";
   const isProfile = pathname === "/profile";
   const [selected, setSelected] = useState<"home" | "profile">("home");
-  const currentAccount = useCurrentAccount();
 
     useEffect(() => {
         if (isHome) {
