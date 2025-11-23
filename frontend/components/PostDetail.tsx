@@ -9,7 +9,7 @@ export default function PostDetail({ post, onClose }: PostDetailProps) {
     // 计算总票数
     const truthRatioTrue = post.trueRatio;
     const truthRatioFalse = 10 - truthRatioTrue;
-    const truthRatioDisplay = `${truthRatioTrue} / ${truthRatioFalse}`;
+    const truthRatioDisplay = post.status === 'Closed' ? `${truthRatioTrue} / ${truthRatioFalse}` : '??? / ???';
     return (
         <div 
             className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50 p-4"

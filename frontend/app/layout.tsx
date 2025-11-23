@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { inter, cbyg } from "./fonts";
 import { Providers } from "./providers";
-import { UserProvider } from "@/context/UserContext";
 import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-black">
       <body className={`${inter.className} ${cbyg.variable} antialiased bg-black`}>
-        <UserProvider><Providers>{children}
-        <Toaster /></Providers></UserProvider>
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

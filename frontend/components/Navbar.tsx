@@ -73,10 +73,10 @@ export default function Navbar() {
         >
         
             <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-200"></div>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-200 pointer-events-none"></div>
               <ConnectButton
                 connectText="Connect"
-                className="relative"
+                className="relative z-10"
                 style={{
                   background: "black",
                   border: "1px solid #333",

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { getAccount } from "../contracts/query";
 import { User } from "@/types/display";
 import { accountToUser } from "@/utils/dataTransformers";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 interface UserContextType {
   user: User | null;
@@ -18,6 +19,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const currentAccount = useCurrentAccount();
 
   const refreshUser = useCallback(async (address: string) => {
     setIsLoading(true);
@@ -41,7 +43,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  
+  // 监听钱包账户变化，自动刷新用户信息
+  useEffect(() => {
+    if (currentAccount) {
+      refreshUser(currentAccount.address);
+    } else {
+      setUser(null); // 钱包断开时清空用户信息
+    }
+  }, [currentAccount, refreshUser]);
 
 
   const value = useMemo(() => ({ user, isLoading, error, refreshUser }), [user, isLoading, error, refreshUser]);
