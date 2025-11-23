@@ -10,10 +10,10 @@ const configs = {
     },
     testnet: {
         // Package: '0xe43dc8c380f79c085a0ec6638b01ac5288c54ae1b219a07766dcf7f45ed6aabd',
-        Package: '0x4997fed4d0d65358dbac7f1491156f976794c0227b35b02c9ce1554705cd9e4d',
-        Seer: '0x43f1488db4b1d24ab7b38bb28d12e4444c191af4c128184f1594f3666503b96e',
-        Config: '0x25c27302e8711eda6137c33ed2961cdda9fcb0a449bf6f03cb9df8cfdaa94e5a',
-        AdminCap: '0xba83d04d1aa95e73bc2d6333ce9c56f90e697c843931127d5b295f8c6fc0acf4',
+        Package: '0xd8251b3c097c52f27a3414cc98ffc82990bf07d8b75b6f62cdb56d352aeb0293',
+        Seer: '0xb78e7c6cb1c247864a2592999d8c2903259cb40f9818bf6125ea108141598dd9',
+        Config: '0x60f3dbfdf36022fbf4c2a2c5b4bc2a6baed754c764e651db083b1243f9475111',
+        AdminCap: '0x2fb286df9e884a4ec1afe58379c7736ae69a2354bcfe89c12b72627bff3a44a2',
     },
     mainnet: {
         Package: process.env.MAINNET_PACKAGE_ID!,
