@@ -141,56 +141,88 @@ export default function HomePage() {
   };
 
   return (
-      <div className="min-h-screen flex flex-col bg-black">
+      <div className="min-h-screen flex flex-col bg-black relative overflow-hidden selection:bg-purple-500/30">
         <Navbar />
+        
+        {/* Noise Texture Overlay */}
+        <div 
+          className="fixed inset-0 pointer-events-none z-0 opacity-10 mix-blend-overlay"
+          style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+          }}
+        />
+
+        {/* Background Graffiti Elements */}
         <div className="fixed inset-0 pointer-events-none z-0">
-                {/* 左上角装饰 */}
-                <div className="absolute top-20 left-10 opacity-60">
-                    <Image src="/logo/wal_1.png" alt="Decoration" width={150} height={150} className="object-contain" />
-                </div>
-                {/* 右上角装饰 */}
-                <div className="absolute top-28 right-20 opacity-60">
-                    <Image src="/logo/wal_3.png" alt="Decoration" width={120} height={120} className="object-contain" />
-                </div>
-                {/* 左下角装饰 */}
-                <div className="absolute bottom-40 left-16 opacity-60">
-                    <Image src="/logo/wal_4.png" alt="Decoration" width={100} height={100} className="object-contain" />
-                </div>
-                {/* 中间右侧装饰 */}
-                <div className="absolute top-1/2 right-10 -translate-y-1/7 opacity-60">
-                    <Image src="/logo/wal_5.png" alt="Decoration" width={130} height={130} className="object-contain" />
-                </div>
-                {/* 渐变效果 */}
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30"></div>
+            {/* Spray Paint Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px]" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-blue-900/20 rounded-full blur-[140px]" />
+            <div className="absolute top-[40%] left-[60%] w-[400px] h-[400px] bg-pink-900/10 rounded-full blur-[100px]" />
+
+            {/* Decorative Images */}
+            <div className="absolute top-20 -left-10 opacity-30 rotate-[-12deg] mix-blend-screen hover:opacity-50 transition-opacity duration-700">
+                <Image src="/logo/wal_1.png" alt="Graffiti Art" width={350} height={350} className="object-contain" />
             </div>
-        <div className='flex-1 px-8 py-14'>
-          <div className='grid grid-cols-1 gap-4 relative z-10 pt-10'>
-            <PostList posts={seer?.posts || []} onPostClick={handlePostClick} onVotePost={handleVotePost} onVerifyPost={handleVerifyPost} />
+            <div className="absolute bottom-40 left-10 opacity-20 rotate-[8deg] mix-blend-screen">
+                <Image src="/logo/wal_4.png" alt="Graffiti Art" width={250} height={250} className="object-contain" />
+            </div>
+            <div className="absolute top-1/2 right-0 translate-x-1/3 -translate-y-1/2 opacity-20 rotate-[-5deg] mix-blend-screen">
+                <Image src="/logo/wal_5.png" alt="Graffiti Art" width={450} height={450} className="object-contain" />
+            </div>
+        </div>
+
+        <div className='flex-1 px-4 md:px-12 py-10 relative z-10'>
+          {/* Header Section */}
+          <div className="flex flex-col items-center justify-center mb-16 pt-8">
+            <h1 className="text-7xl md:text-9xl font-cbyg text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-500 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transform -rotate-2 tracking-widest relative">
+              THE WALL
+            </h1>
+            <p className="mt-4 text-xl md:text-2xl font-cbyg text-gray-400 tracking-[0.2em] uppercase opacity-80 border-b border-gray-800 pb-2">
+              Where Prophecies Live
+            </p>
+          </div>
+
+          <div className='w-full max-w-7xl mx-auto'>
+            {(!seer?.posts || seer.posts.length === 0) ? (
+              <div className="flex flex-col items-center justify-center min-h-[40vh] border-2 border-dashed border-gray-800 rounded-3xl bg-black/20 backdrop-blur-sm">
+                <h2 className="text-6xl font-cbyg text-gray-600 mb-6 tracking-wide animate-pulse">Silence...</h2>
+                <p className="text-2xl font-cbyg text-gray-700 tracking-wider">Be the first to speak.</p>
+              </div>
+            ) : (
+              <PostList posts={seer.posts} onPostClick={handlePostClick} onVotePost={handleVotePost} onVerifyPost={handleVerifyPost} />
+            )}
           </div>
         </div>
        
         {totalPages > 1 && (
-          <div className='flex items-center gap-4 justify-center pb-8'>
+          <div className='flex items-center gap-8 justify-center pb-12 relative z-10'>
             <button 
               onClick={handlePrevious}
               disabled={currentPage === 1}
-              className={`text-white font-cbyg text-2xl transition-opacity bg-transparent border-none outline-none ${
-                currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'
+              className={`font-cbyg text-3xl transition-all duration-300 ${
+                currentPage === 1 
+                  ? 'text-gray-700 cursor-not-allowed' 
+                  : 'text-white hover:text-purple-400 hover:scale-125 cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]'
               }`}
             > 
-              &lt; 
+              PREV
             </button>
-            <span className='text-white font-cbyg text-xl'>
-              {currentPage} / {totalPages}
-            </span>
+            <div className="relative">
+              <span className='text-white font-cbyg text-4xl tracking-widest'>
+                {currentPage}<span className="text-gray-600 mx-2">/</span>{totalPages}
+              </span>
+              <div className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"></div>
+            </div>
             <button 
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className={`text-white font-cbyg text-2xl transition-opacity bg-transparent border-none outline-none ${
-                currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'
+              className={`font-cbyg text-3xl transition-all duration-300 ${
+                currentPage === totalPages 
+                  ? 'text-gray-700 cursor-not-allowed' 
+                  : 'text-white hover:text-purple-400 hover:scale-125 cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]'
               }`}
             > 
-              &gt; 
+              NEXT 
             </button>
           </div>
         )}

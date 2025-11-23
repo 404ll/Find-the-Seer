@@ -47,9 +47,9 @@ export default function OwnPostList({ posts, onPostClick }: OwnPostListProps) {
     };
     
     return (
-        <div className='relative flex flex-col gap-4 bg-white rounded-[12px] p-4 max-w-3xl h-[510px]'>
+        <div className='relative flex flex-col gap-4 bg-transparent rounded-[12px] p-4 max-w-3xl min-h-[510px]'>
             {safePosts.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-black font-cbyg text-2xl">
+                <div className="flex h-full items-center justify-center text-gray-500 font-cbyg text-2xl border-2 border-dashed border-gray-800 rounded-xl min-h-[200px]">
                     You haven&apos;t created any posts yet.
                 </div>
             ) : (
@@ -64,27 +64,27 @@ export default function OwnPostList({ posts, onPostClick }: OwnPostListProps) {
                         ))}
                     </div>
                     {totalPages > 1 && (
-                        <div className='absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-4 justify-center'>
+                        <div className='absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-6 justify-center'>
                             <button 
                                 onClick={handlePrevious}
                                 disabled={currentPage === 1}
-                                className={`text-black font-cbyg text-2xl transition-opacity bg-transparent border-none outline-none ${
-                                    currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'
+                                className={`text-white font-cbyg text-2xl transition-all bg-transparent border-none outline-none ${
+                                    currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:opacity-100 hover:text-purple-400 hover:scale-125 cursor-pointer'
                                 }`}
                             > 
-                                &lt; 
+                                PREV 
                             </button>
-                            <span className='text-black font-cbyg text-xl'>
-                                {currentPage} / {totalPages}
+                            <span className='text-white font-cbyg text-xl tracking-widest border-b border-purple-500/50'>
+                                {currentPage} <span className="text-gray-500 text-sm mx-1">/</span> {totalPages}
                             </span>
                             <button 
                                 onClick={handleNext}
                                 disabled={currentPage === totalPages}
-                                className={`text-black font-cbyg text-2xl transition-opacity bg-transparent border-none outline-none ${
-                                    currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'
+                                className={`text-white font-cbyg text-2xl transition-all bg-transparent border-none outline-none ${
+                                    currentPage === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:opacity-100 hover:text-purple-400 hover:scale-125 cursor-pointer'
                                 }`}
                             > 
-                                &gt; 
+                                NEXT 
                             </button>
                         </div>
                     )}

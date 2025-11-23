@@ -79,27 +79,26 @@ export default function ProfilePage() {
         setIsCreatePostFormOpen(false);
     };
     return (
-        <div className="min-h-screen flex flex-col bg-black relative overflow-hidden">
-            {/* 背景装饰元素 */}
+        <div className="min-h-screen flex flex-col bg-black relative overflow-hidden selection:bg-purple-500/30">
+            {/* Noise Texture */}
+            <div 
+              className="fixed inset-0 pointer-events-none z-0 opacity-10 mix-blend-overlay"
+              style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+              }}
+            />
+
+            {/* Background Graffiti Elements */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                {/* 左上角装饰 */}
-                <div className="absolute top-20 left-10 opacity-60">
-                    <Image src="/logo/wal_1.png" alt="Decoration" width={150} height={150} className="object-contain" />
+                <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-purple-900/20 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-900/20 rounded-full blur-[140px]" />
+                
+                <div className="absolute top-32 right-20 opacity-20 rotate-12 mix-blend-screen">
+                    <Image src="/logo/wal_3.png" alt="Decoration" width={400} height={400} className="object-contain" />
                 </div>
-                {/* 右上角装饰 */}
-                <div className="absolute top-32 right-20 opacity-60">
-                    <Image src="/logo/wal_3.png" alt="Decoration" width={120} height={120} className="object-contain" />
+                <div className="absolute bottom-40 left-16 opacity-20 -rotate-12 mix-blend-screen">
+                    <Image src="/logo/wal_4.png" alt="Decoration" width={300} height={300} className="object-contain" />
                 </div>
-                {/* 左下角装饰 */}
-                <div className="absolute bottom-40 left-16 opacity-60">
-                    <Image src="/logo/wal_4.png" alt="Decoration" width={100} height={100} className="object-contain" />
-                </div>
-                {/* 中间右侧装饰 */}
-                <div className="absolute top-1/2 right-10 -translate-y-1/2 opacity-60">
-                    <Image src="/logo/wal_5.png" alt="Decoration" width={130} height={130} className="object-contain" />
-                </div>
-                {/* 渐变效果 */}
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30"></div>
             </div>
 
             <div className="relative z-10">

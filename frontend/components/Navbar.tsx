@@ -30,57 +30,63 @@ export default function Navbar() {
   };
 
     return (
-          <div className="flex flex-col bg-black">
+          <div className="flex flex-col w-full z-50">
       <header 
-        className="flex items-center justify-center relative px-4 py-4 pb-0 bg-white cursor-pointer"
+        className="flex items-center justify-center relative px-4 py-6 bg-transparent cursor-pointer"
         onClick={handleHeaderClick}
       >
       {/* <Image src="/logo/wal_2.png" alt="Seer" width={40} height={40} className="rounded-full"/> */}
         <div 
-          className="flex items-center gap-24"
+          className="flex items-center gap-16 md:gap-24 bg-black/40 backdrop-blur-md px-8 py-2 rounded-full border border-white/10"
           onClick={(e) => e.stopPropagation()}
         >
           <Link
             href="/home"
-            className={`font-cbyg text-3xl px-4 py-2 rounded-t-[12px] transition-colors ${
+            className={`font-cbyg text-2xl md:text-3xl px-4 py-1 transition-all duration-300 relative group ${
               selected === "home"
-                ? "text-white bg-black shadow-sm-top"
-                : "text-black bg-white shadow-sm-top"
+                ? "text-white scale-110"
+                : "text-gray-400 hover:text-white"
             }`}
           >
             Home
+            {selected === "home" && (
+                <span className="absolute -bottom-2 left-0 w-full h-1 bg-purple-500 shadow-[0_0_10px_#a855f7]"></span>
+            )}
           </Link>
           <Link
             href="/profile"
-            className={`font-cbyg text-3xl px-4 py-2 rounded-t-[12px] transition-colors ${
+            className={`font-cbyg text-2xl md:text-3xl px-4 py-1 transition-all duration-300 relative group ${
               selected === "profile"
-                ? "text-white bg-black shadow-sm-top"
-                : "text-black bg-white shadow-sm-top"
+                ? "text-white scale-110"
+                : "text-gray-400 hover:text-white"
             }`}
           >
             Profile
+            {selected === "profile" && (
+                <span className="absolute -bottom-2 left-0 w-full h-1 bg-purple-500 shadow-[0_0_10px_#a855f7]"></span>
+            )}
           </Link>
         </div>
         <div 
-          className="absolute right-4 flex items-center"
+          className="absolute right-4 md:right-8 flex items-center"
           onClick={(e) => e.stopPropagation()}
         >
         
             <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-200"></div>
               <ConnectButton
-                connectText="Connect Wallet"
-                className="relative overflow-hidden bg-white px-4 sm:px-6 py-2.5 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 active:shadow-md"
+                connectText="Connect"
+                className="relative"
                 style={{
-                  background: "#000000",
-                  border: "none",
-                  color: "#FFFFFF",
-                  fontSize: "20px",
+                  background: "black",
+                  border: "1px solid #333",
+                  color: "white",
+                  fontSize: "18px",
                   fontFamily: "var(--font-cbyg)",
                   fontWeight: "400",
-                  borderRadius: "12px",
-                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  padding: "8px 20px",
                   position: "relative",
-                  overflow: "hidden",
                 }}
               />
             </div>
